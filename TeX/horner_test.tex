@@ -1,0 +1,43 @@
+\documentclass{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{compat=1.18}
+
+\DeclareMathOperator{\re}{Re}
+
+\begin{document}
+
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+    xlabel = {$\re{z}$},
+    ymin = 1e-38,
+    legend pos = south east,
+    legend style = {nodes={scale=0.75}},
+    legend image code/.code={
+    \draw[mark repeat=2,mark phase=2]
+    plot coordinates {
+    (0cm,0cm)
+    (0.2cm,0cm)        %% default is (0.3cm,0cm)
+    (0.35cm,0cm)         %% default is (0.6cm,0cm)
+    };%
+    },
+    x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    },
+    cycle list name=black white
+]
+\addplot+[very thin, solid, mark=none] table [x=x, y=a priori error bound, col sep=comma]{data_files/horner_test.dat};
+\addlegendentry{A priori error bound}
+\addplot+[very thin, densely dotted, mark=none] table [x=x, y=running error bound, col sep=comma]{data_files/horner_test.dat};
+\addlegendentry{Running error bound}
+\addplot+[very thin, dashdotted, mark=none] table [x=x, y=forward error, col sep=comma]{data_files/horner_test.dat};
+\addlegendentry{Forward error}
+\end{semilogyaxis}
+\end{tikzpicture}
+
+\end{document}

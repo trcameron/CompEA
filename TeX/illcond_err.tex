@@ -1,0 +1,73 @@
+\documentclass{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+\pgfplotstableread[col sep=comma]{data_files/illcond_unitdisk_test.dat}\dataA
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]2, xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\fslopea{\pgfplotstableregressiona}
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]4, xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\fqslopea{\pgfplotstableregressiona}
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]6, xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\fcslopea{\pgfplotstableregressiona}
+
+\pgfplotstableread[col sep=comma]{data_files/illcond_truncexp_test.dat}\dataB
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]2, xmode=log, ymode=log}]{regression}{\dataB}
+% store slope
+\xdef\fslopeb{\pgfplotstableregressiona}
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]4, xmode=log, ymode=log}]{regression}{\dataB}
+% store slope
+\xdef\fqslopeb{\pgfplotstableregressiona}
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]6, xmode=log, ymode=log}]{regression}{\dataB}
+% store slope
+\xdef\fcslopeb{\pgfplotstableregressiona}
+
+\begin{tikzpicture}
+\begin{groupplot}[
+	group style = {
+		group size = 2 by 1,
+		ylabels at = edge left,
+		yticklabels at = edge left,
+		horizontal sep = 15pt,
+	},
+	ylabel = {Relative Backward Error},
+	legend pos = north west,
+	legend style = {nodes={scale=0.55}},
+    	legend image code/.code={
+    	\draw[mark repeat=2,mark phase=2]
+    	plot coordinates {
+    		(0cm,0cm)
+    		(0.3cm,0cm)        %% default is (0.3cm,0cm)
+    		(0.5cm,0cm)         %% default is (0.6cm,0cm)Truncated Exponential
+   	 };%
+    	},
+    	cycle list name=black white
+]
+\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=Roots on the Unit Disk]
+\addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
+\addlegendentry{Ehrlich-Aberth, slope = {\pgfmathprintnumber[precision=2]{\fslopea}}}
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad, slope = {\pgfmathprintnumber[precision=2]{\fqslopea}}}
+\addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
+\addlegendentry{Ehrlich-Aberth-Comp, slope = {\pgfmathprintnumber[precision=2]{\fcslopea}}}
+\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=Truncated Exponential]
+\addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
+\addlegendentry{Ehrlich-Aberth, slope = {\pgfmathprintnumber[precision=2]{\fslopeb}}}
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad, slope = {\pgfmathprintnumber[precision=2]{\fqslopeb}}}
+\addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
+\addlegendentry{Ehrlich-Aberth-Comp, slope = {\pgfmathprintnumber[precision=2]{\fcslopeb}}}
+\end{groupplot}
+\end{tikzpicture}
+
+\end{document}
