@@ -9,13 +9,6 @@ typedef struct
 {
 	bool x, y;
 }	point_conv;
-/* gamma constant */
-double gamma_const(const unsigned int n)
-{
-	double s = 1.41421356237309505;
-	double g = 2*EPS/(1-2*EPS);
-	return n*s*g/(1-n*s*g);
-}
 /* ehrlich aberth correction term */
 double complex correction(const double complex* roots,const double complex h,const double complex hd,const unsigned int deg,const unsigned int j)
 {
@@ -102,9 +95,9 @@ void ehrlich_aberth(const double complex* poly,double complex* roots,const unsig
 	bool s;
 	double b;
 	double complex h,hd;
-	// local pointers
-	double* alpha = (double*)malloc((deg+1)*sizeof(double));
-	bool* conv = (bool*)malloc(deg*sizeof(bool));
+	// local arrays
+	double alpha[deg+1];
+	bool conv[deg];
 	// initial estimates
 	for(int i=0; i<deg; i++)
 	{
@@ -163,9 +156,10 @@ void ehrlich_aberth(const double complex* poly,double complex* roots,const unsig
 			break;
 		}
 	}
-	// free local pointers
-	free(alpha);
-	free(conv);
+	if(!s)
+	{
+		printf("not all roots converged\n");
+	}
 }
 /* ehrlich_aberth with compensated arithmetic*/
 void ehrlich_aberth_comp(const double complex* poly,double complex* roots,const unsigned int deg,const unsigned int itmax)
@@ -174,9 +168,9 @@ void ehrlich_aberth_comp(const double complex* poly,double complex* roots,const 
 	int s;
 	double b;
 	double complex h,hd;
-	// local pointers
-	double* alpha = (double*)malloc((deg+1)*sizeof(double));
-	point_conv* conv = (point_conv*)malloc(deg*sizeof(point_conv));
+	// local arrays
+	double alpha[deg+1];
+	point_conv conv[deg];
 	// initial estimates
 	for(int i=0; i<deg; i++)
 	{
@@ -231,10 +225,10 @@ void ehrlich_aberth_comp(const double complex* poly,double complex* roots,const 
 				{
 					rhorner_comp_cmplx(poly,1/roots[j],deg,&h,&hd,&b);
 					double errBound = EPS*cabs(h) + (gamma_const(4*deg+2)*b + 2*pow(EPS,2)*cabs(h));
-					if(cabs(h) > errBound)
+					if(cabs(h) > 4*errBound)
 					{
 						double complex corr = rcorrection(roots,h,hd,deg,j);
-						if(cabs(corr) > EPS*cabs(roots[j]))
+						if(cabs(corr) > 4*EPS*cabs(roots[j]))
 						{
 							roots[j] = roots[j] - corr;
 						}
@@ -253,10 +247,10 @@ void ehrlich_aberth_comp(const double complex* poly,double complex* roots,const 
 				{
 					horner_comp_cmplx(poly,roots[j],deg,&h,&hd,&b);
 					double errBound = EPS*cabs(h) + (gamma_const(4*deg+2)*b + 2*pow(EPS,2)*cabs(h));
-					if(cabs(h) > errBound)
+					if(cabs(h) > 4*errBound)
 					{
 						double complex corr = correction(roots,h,hd,deg,j);
-						if(cabs(corr) > EPS)
+						if(cabs(corr) > 4*EPS)
 						{
 							roots[j] = roots[j] - corr;	
 						}
@@ -282,9 +276,10 @@ void ehrlich_aberth_comp(const double complex* poly,double complex* roots,const 
 			break;
 		}
 	}
-	// free local pointers
-	free(alpha);
-	free(conv);
+	if(!s)
+	{
+		printf("not all roots comp converged\n");
+	}
 }
 /* ehrlich_aberth in quadruple precision */
 void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned int deg,const unsigned int itmax)
@@ -296,9 +291,9 @@ void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned
 	mpfr_init2(b_quad,113); mpfr_init2(eps_quad,113); mpfr_init2(x_quad,113);
 	mpc_init2(corr_quad,113); mpc_init2(h_quad,113); mpc_init2(hd_quad,113);
 	mpfr_set_d(eps_quad,pow(2,-113),MPFR_RNDN);
-	// local pointers
-	mpfr_t* alpha_quad = (mpfr_t*)malloc((deg+1)*sizeof(mpfr_t));
-	bool* conv = (bool*)malloc(deg*sizeof(bool));
+	// local arrays
+	mpfr_t alpha_quad[deg+1];
+	bool conv[deg];
 	// initial estimates
 	for(int i=0; i<deg; i++)
 	{
@@ -324,9 +319,9 @@ void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned
 				if(mpfr_cmp_ui(x_quad,1)>0)
 				{
 					mpfr_ui_div(x_quad,1,x_quad,MPFR_RNDN);
-					rhorner_quad_real(alpha_quad,x_quad,deg,&b_quad);
+					rhorner_mp_real(alpha_quad,x_quad,deg,&b_quad);
 					mpc_ui_div(corr_quad,1,roots_quad[j],MPC_RNDNN);
-					rhorner_quad_cmplx(poly_quad,corr_quad,deg,&h_quad,&hd_quad);
+					rhorner_mp_cmplx(poly_quad,corr_quad,deg,&h_quad,&hd_quad);
 					mpfr_mul(b_quad,b_quad,eps_quad,MPFR_RNDN);
 					mpc_abs(x_quad,h_quad,MPFR_RNDN);
 					if(mpfr_cmp(x_quad,b_quad)>0)
@@ -341,8 +336,8 @@ void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned
 				}
 				else
 				{
-					horner_quad_real(alpha_quad,x_quad,deg,&b_quad);
-					horner_quad_cmplx(poly_quad,roots_quad[j],deg,&h_quad,&hd_quad);
+					horner_mp_real(alpha_quad,x_quad,deg,&b_quad);
+					horner_mp_cmplx(poly_quad,roots_quad[j],deg,&h_quad,&hd_quad);
 					mpfr_mul(b_quad,b_quad,eps_quad,MPFR_RNDN);
 					mpc_abs(x_quad,h_quad,MPFR_RNDN);
 					if(mpfr_cmp(x_quad,b_quad)>0)
@@ -367,5 +362,17 @@ void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned
 			break;
 		}
 	}
+	if(!s)
+	{
+		printf("not all roots quad converged\n");
+	}
+	// clear mpfr variables
+	mpfr_clears(b_quad, eps_quad, x_quad, (mpfr_ptr) 0);
+	for(int i=0; i<=deg; i++)
+	{
+		mpfr_clear(alpha_quad[i]);
+	}
+	// clear mpc variables
+	mpc_clear(corr_quad); mpc_clear(h_quad); mpc_clear(hd_quad);
 }
 #endif

@@ -8,7 +8,7 @@
 int main(int argc,char **argv)
 {
 	/* testing variables */
-	const unsigned deg_min = 10, deg_max = 1280, itmax = 30, itnum = 10; 
+	const unsigned deg_min = 10, deg_max = 1280, itmax = 50, itnum = 10; 
 	double ea_et, comp_et, quad_et;
 	clock_t ea_begin, ea_end, comp_begin, comp_end, quad_begin, quad_end;
 	/* random coefficients test */

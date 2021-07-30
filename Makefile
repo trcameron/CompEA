@@ -49,7 +49,7 @@ pdf_wellcond_test:
 	@open figures/wellcond_time.pdf
 	
 pdf_specpoly_test:
-	@pdflatex TeX/specpoly_test.tex
+	@pdflatex --interaction=batchmode TeX/specpoly_test.tex
 	@mv specpoly_test.pdf figures/specpoly_test.pdf
 	@rm specpoly_test.log
 	@rm specpoly_test.aux

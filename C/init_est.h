@@ -37,11 +37,11 @@ void convex_hull(point* points,const unsigned int npoints,point* hull,unsigned i
  */
 void init_est(const double* alpha,const unsigned int deg,double complex* roots)
 {
-	// local pointers
-	point* points = (point*)malloc((deg+1)*sizeof(point));
-	point* hull = (point*)malloc((deg+1)*sizeof(point));
-	unsigned int* hullsize = (unsigned int*)malloc(sizeof(unsigned int));
+	// local arrays
+	point points[deg+1];
+	point hull[deg+1];
 	// local variables
+	unsigned int hullsize;
 	const double pi2 = 6.28318530717958647693, sigma = 0.7;
 	int i, j, k = 0, nzeros;
 	double a1, a2, ang, r, th = pi2/deg;
@@ -60,9 +60,9 @@ void init_est(const double* alpha,const unsigned int deg,double complex* roots)
 		}
 	}
 	// compute convex hull
-	convex_hull(points,deg+1,hull,hullsize);
+	convex_hull(points,deg+1,hull,&hullsize);
 	// compute initial estimates
-	for(i=*hullsize-2; i>=0; i--)
+	for(i=hullsize-2; i>=0; i--)
 	{
 		nzeros = hull[i].x - hull[i+1].x;
 		a1 = pow(alpha[hull[i+1].x],1.0/nzeros);
@@ -75,19 +75,15 @@ void init_est(const double* alpha,const unsigned int deg,double complex* roots)
 		}
 		k += nzeros;
 	}
-	// free pointers
-	free(points);
-	free(hull);
-	free(hullsize);
 }
 /* init_est_quad */
 void init_est_quad(const mpfr_t* alpha_quad,const unsigned int deg,mpc_t* roots_quad)
 {
-	// local pointers
-	point* points = (point*)malloc((deg+1)*sizeof(point));
-	point* hull = (point*)malloc((deg+1)*sizeof(point));
-	unsigned int* hullsize = (unsigned int*)malloc(sizeof(unsigned int));
+	// local arrays
+	point points[deg+1];
+	point hull[deg+1];
 	// local variables
+	unsigned int hullsize;
 	const double pi2 = 6.28318530717958648, sigma = 0.7;
 	int i, j, k = 0, nzeros;
 	double a1, a2, ang, r, th = pi2/deg;
@@ -106,9 +102,9 @@ void init_est_quad(const mpfr_t* alpha_quad,const unsigned int deg,mpc_t* roots_
 		}
 	}
 	// compute convex hull
-	convex_hull(points,deg+1,hull,hullsize);
+	convex_hull(points,deg+1,hull,&hullsize);
 	// compute initial estimates
-	for(i=*hullsize-2; i>=0; i--)
+	for(i=hullsize-2; i>=0; i--)
 	{
 		nzeros = hull[i].x - hull[i+1].x;
 		a1 = pow(mpfr_get_d(alpha_quad[hull[i+1].x],MPFR_RNDN),1.0/nzeros);
@@ -121,9 +117,5 @@ void init_est_quad(const mpfr_t* alpha_quad,const unsigned int deg,mpc_t* roots_
 		}
 		k += nzeros;
 	}
-	// free pointers
-	free(points);
-	free(hull);
-	free(hullsize);
 }
 #endif

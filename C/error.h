@@ -60,6 +60,16 @@ void roots_to_poly(double complex* poly,const double complex* roots,const double
 		poly[i] = mpc_get_dc(poly_mp[deg-i-1],MPC_RNDNN);
 	}
 	poly[deg] = lead_coeff;
+	/* clear mpfr variables */
+	mpfr_clears(err_mp, abs_mp, (mpfr_ptr) 0);
+	/* clear mpc variables */
+	mpc_clear(mul_mp); mpc_clear(sub_mp);
+	for(int i=0; i<deg; i++)
+	{
+		mpc_clear(poly_mp[i]);
+		mpc_clear(roots_mp[i]);
+	}
+	mpc_clear(poly_mp[deg]);
 }
 /* backward error */
 double back_err(const double complex* poly,const double complex* roots,const unsigned int deg)
@@ -121,8 +131,18 @@ double back_err(const double complex* poly,const double complex* roots,const uns
 		}
 	}
 	mpfr_div(err_mp,err_mp,max_mp,MPFR_RNDN);
-	// return largest value between err_mp and EPS
 	double p[2] = {mpfr_get_d(err_mp,MPFR_RNDN),EPS};
+	// clear mpfr variables
+	mpfr_clears(err_mp, abs_mp, max_mp, (mpfr_ptr) 0);
+	// clear mpc variables
+	mpc_clear(mul_mp); mpc_clear(sub_mp);
+	for(int i=0; i<deg; i++)
+	{
+		mpc_clear(poly_mp[i]);
+		mpc_clear(roots_mp[i]);
+	}
+	mpc_clear(poly_mp[deg]);
+	// return largest value between err_mp and EPS
 	return max_value(p,2);
 }
 /* forward error */
@@ -196,8 +216,16 @@ double forw_err(const double complex* roots,const double complex* exact_roots,co
 		}
 	}
 	// return largest value of sv1/max, sv2/max, and EPS
-	double p[3] = {sv1/max,sv2/max,EPS};
-	return max_value(p,3);
+	double p[2];
+	if(sv1 < sv2)
+	{
+		p[0] = sv1/max; p[1] = EPS;
+	}
+	else
+	{
+		p[0] = sv2/max; p[1] = EPS;
+	}
+	return max_value(p,2);
 }
 /* maximum condition number */
 double max_cond(const double complex* poly,const double complex* roots,const unsigned int deg)
@@ -225,8 +253,8 @@ double max_cond(const double complex* poly,const double complex* roots,const uns
 	for(int i=0; i<deg; i++)
 	{
 		mpc_abs(x_mp,roots_mp[i],MPFR_RNDN);
-		horner_quad_real(alpha_mp,x_mp,deg,&b_mp);
-		horner_quad_cmplx(poly_mp,roots_mp[i],deg,&h_mp,&hd_mp);
+		horner_mp_real(alpha_mp,x_mp,deg,&b_mp);
+		horner_mp_cmplx(poly_mp,roots_mp[i],deg,&h_mp,&hd_mp);
 		mpc_abs(y_mp,hd_mp,MPFR_RNDN);
 		mpfr_mul(x_mp,x_mp,y_mp,MPFR_RNDN);
 		mpfr_div(x_mp,b_mp,x_mp,MPFR_RNDN);
@@ -235,7 +263,21 @@ double max_cond(const double complex* poly,const double complex* roots,const uns
 		{
 			max = temp;
 		}
-	}			
+	}
+	// clear mpfr variables
+	mpfr_clears(b_mp,x_mp,y_mp,(mpfr_ptr) 0);
+	for(int i=0; i<=deg; i++)
+	{
+		mpfr_clear(alpha_mp[i]);
+	}
+	// clear mpc variables
+	mpc_clear(h_mp); mpc_clear(hd_mp);
+	for(int i=0; i<deg; i++)
+	{
+		mpc_clear(poly_mp[i]);
+		mpc_clear(roots_mp[i]);
+	}
+	mpc_clear(poly_mp[deg]);
 	// return maximum condition number
 	return max;
 }

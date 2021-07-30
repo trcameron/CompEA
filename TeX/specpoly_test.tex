@@ -10,7 +10,7 @@
 \begin{tikzpicture}
 \begin{groupplot}[
 	group style = {
-		group size = 3 by 1,
+		group size = 2 by 2,
 		ylabels at = edge left,
 		yticklabels at = edge left,
 		horizontal sep = 15pt,
@@ -29,6 +29,13 @@
     	},
     	cycle list name=black white
 ]
+\nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log,title=Chebyshev]
+\addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{Ehrlich-Aberth}
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err,col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad}
+\addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{Ehrlich-Aberth-Comp}
 \nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log,title=Prescribed Roots]
 \addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/presroots_test.dat};
 \addlegendentry{Ehrlich-Aberth}

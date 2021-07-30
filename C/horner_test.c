@@ -3,13 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-/* Gamma Constant */
-double gamma_const(const unsigned int n)
-{
-	double s = 1.41421356237309504880;
-	double g = 2*EPS/(1-2*EPS);
-	return n*s*g/(1-n*s*g);
-}
 /* Main Function */
 int main(int argc,char **argv)
 {
@@ -57,12 +50,12 @@ int main(int argc,char **argv)
 		// quadruple precision
 		mpc_set_dc(xc_quad,x+I,MPC_RNDNN);
 		quad_begin = clock();
-		horner_quad_cmplx(poly_quad,xc_quad,deg,&h_quad,&hd_quad);
+		horner_mp_cmplx(poly_quad,xc_quad,deg,&h_quad,&hd_quad);
 		quad_end = clock();
 		quad_et += (double)(quad_end - quad_begin) / CLOCKS_PER_SEC;
 		// a priori error bound
 		mpfr_set_d(x_quad,cabs(x+I),MPFR_RNDN);
-		horner_quad_dble(alpha_quad,x_quad,deg,&eb_quad);
+		horner_mp_real(alpha_quad,x_quad,deg,&eb_quad);
 		mpc_abs(x_quad,h_quad,MPFR_RNDN);
 		fprintf(f,"%.5e, ",EPS*mpfr_get_d(x_quad,MPFR_RNDN)+pow(gamma_const(2*deg),2)*mpfr_get_d(eb_quad,MPFR_RNDN));
 		// compensated arithmetic
@@ -81,6 +74,20 @@ int main(int argc,char **argv)
 	}
 	/* close file */
 	fclose(f);
+	/* clear mpz variables */
+	mpz_clear(mp_bin);
+	/* clear mpfr variables */
+	mpfr_clears(eb_quad,x_quad,(mpfr_ptr) 0);
+	for(int i=0; i<=deg; i++)
+	{
+		mpfr_clear(alpha_quad[i]);
+	}
+	/* clear mpc variables */
+	mpc_clear(err_quad); mpc_clear(h_quad); mpc_clear(hd_quad); mpc_clear(xc_quad);
+	for(int i=0; i<=deg; i++)
+	{
+		mpc_clear(poly_quad[i]);
+	}
 	/* print elapsed times */
 	printf("comp horner elapsed time = %.4e\n",comp_et);
 	printf("quad horner elapsed time = %.4e\n",quad_et);

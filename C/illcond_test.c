@@ -8,7 +8,8 @@
 int main(int argc,char **argv)
 {
 	/* testing variables */
-	const unsigned deg_min = 10, deg_max = 100, itmax = 30, itnum = 10; 
+	unsigned int deg_min = 10, deg_max = 150;
+	const unsigned int itmax = 50, itnum = 10; 
 	const double pi2 = 6.28318530717958647693;
 	double ea_et, comp_et, quad_et;
 	clock_t ea_begin, ea_end, comp_begin, comp_end, quad_begin, quad_end;
@@ -83,6 +84,7 @@ int main(int argc,char **argv)
 	// close file
 	fclose(f);
 	/* truncated exponential test */
+	deg_min = 10, deg_max = 100;
 	f = fopen("data_files/illcond_truncexp_test.dat","w+");
 	fprintf(f,"degree, ea_time, ea_err, ea_comp_time, ea_comp_err, ea_quad_time, ea_quad_err\n");
 	ea_et = 0; comp_et = 0; quad_et = 0;

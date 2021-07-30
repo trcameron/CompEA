@@ -14,6 +14,13 @@ double ufp(const double p)
 	double q = p/DBL_EPSILON + p;
 	return fma(q,EPS-1,q);
 }
+/* Gamma Constant */
+double gamma_const(const unsigned int n)
+{
+	double s = 1.41421356237309504880;
+	double g = 2*EPS/(1-2*EPS);
+	return n*s*g/(1-n*s*g);
+}
 /* Two Sum */
 void two_sum(const double a,const double b,struct eft* res)
 {
@@ -55,7 +62,7 @@ void two_prod_cmplx(const double complex a,const double complex b,struct eft* ef
 double extract(double* p,double sigma)
 {
 	struct eft res;
-	for(int i=0; i<4; i++)
+	for(int i=0; i<4; ++i)
 	{
 		two_sum(sigma,p[i],&res);
 		sigma = res.fl_res;
@@ -97,7 +104,7 @@ double fast_acc_sum(double* p)
 	}
 	t = 0;
 	do {
-		sigma = (2*T)/(1 - 13*EPS);
+		sigma = (2*T)/fma(-13,EPS,1);
 		sigma_new = extract(p,sigma);
 		tau = sigma_new - sigma;
 		t_new = t;
@@ -177,7 +184,7 @@ void horner_comp_cmplx(const double complex* poly,const double complex x,const u
 	double ap[4];
 	// Horner's method
 	*h = poly[deg]; *hd = 0; *eb = 0;
-	for(int i=deg-1; i>=0; i--)
+	for(int i=deg-1; i>=0; --i)
 	{
 		// product and sum for derivative evaluation
 		two_prod_cmplx(*hd,x,eft_arr,&tpc);
@@ -215,7 +222,7 @@ void rhorner_comp_cmplx(const double complex* poly,const double complex x,const 
 	double ap[4];
 	// Horner's method
 	*h = poly[0]; *hd = 0; *eb = 0;
-	for(int i=1; i<=deg; i++)
+	for(int i=1; i<=deg; ++i)
 	{
 		// product and sum for derivative evaluation
 		two_prod_cmplx(*hd,x,eft_arr,&tpc);
@@ -241,72 +248,80 @@ void rhorner_comp_cmplx(const double complex* poly,const double complex x,const 
 	*h += e;
 	*hd += ed;
 }
-/* Horner's Method with Real Quadruple Precision */
-void horner_quad_real(const mpfr_t* poly_quad,const mpfr_t x_quad,const unsigned int deg,mpfr_t* h_quad)
+/* Horner's Method with Real Multi-Precision */
+void horner_mp_real(const mpfr_t* poly_mp,const mpfr_t x_mp,const unsigned int deg,mpfr_t* h_mp)
 {
 	/* initialize and set mpfr variables */
 	mpfr_t mul;
-	mpfr_prec_t prec = mpfr_get_prec(*h_quad);
+	mpfr_prec_t prec = mpfr_get_prec(*h_mp);
 	mpfr_init2(mul,prec);
-	mpfr_set(*h_quad,poly_quad[deg],MPFR_RNDN);
+	mpfr_set(*h_mp,poly_mp[deg],MPFR_RNDN);
 	/* evaluate polynomial in quadruple precision */
 	for(int i=deg-1; i>=0; i--)
 	{
-		mpfr_mul(mul,*h_quad,x_quad,MPFR_RNDN);
-		mpfr_add(*h_quad,mul,poly_quad[i],MPFR_RNDN);
-	}		
+		mpfr_mul(mul,*h_mp,x_mp,MPFR_RNDN);
+		mpfr_add(*h_mp,mul,poly_mp[i],MPFR_RNDN);
+	}
+	/* clear mpc variable */
+	mpfr_clear(mul);		
 }
-/* Reversal Horner's Method with Real Quadruple Precision */
-void rhorner_quad_real(const mpfr_t* poly_quad,const mpfr_t x_quad,const unsigned int deg,mpfr_t* h_quad)
+/* Reversal Horner's Method with Real Multi-Precision */
+void rhorner_mp_real(const mpfr_t* poly_mp,const mpfr_t x_mp,const unsigned int deg,mpfr_t* h_mp)
 {
 	/* initialize and set mpfr variables */
 	mpfr_t mul;
-	mpfr_prec_t prec = mpfr_get_prec(*h_quad);
+	mpfr_prec_t prec = mpfr_get_prec(*h_mp);
 	mpfr_init2(mul,prec);
-	mpfr_set(*h_quad,poly_quad[0],MPFR_RNDN);
+	mpfr_set(*h_mp,poly_mp[0],MPFR_RNDN);
 	/* evaluate polynomial in quadruple precision */
 	for(int i=1; i<=deg; i++)
 	{
-		mpfr_mul(mul,*h_quad,x_quad,MPFR_RNDN);
-		mpfr_add(*h_quad,mul,poly_quad[i],MPFR_RNDN);
-	}		
+		mpfr_mul(mul,*h_mp,x_mp,MPFR_RNDN);
+		mpfr_add(*h_mp,mul,poly_mp[i],MPFR_RNDN);
+	}
+	/* clear mpc variable */
+	mpfr_clear(mul);		
 } 
-/* Horner's Method with Complex Quadruple Precision */
-void horner_quad_cmplx(const mpc_t* poly_quad,const mpc_t x_quad,const unsigned int deg,mpc_t* h_quad,mpc_t* hd_quad)
+/* Horner's Method with Complex Multi-Precision */
+void horner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp,mpc_t* hd_quad)
 {
 	/* initialize and set mpc variables */
 	mpc_t mul;
-	mpfr_prec_t prec = mpc_get_prec(*h_quad);
+	mpfr_prec_t prec = mpc_get_prec(*h_mp);
 	mpc_init2(mul,prec);
-	mpc_set(*h_quad,poly_quad[deg],MPC_RNDNN); mpc_set_dc(*hd_quad,0,MPC_RNDNN);
+	mpc_set(*h_mp,poly_mp[deg],MPC_RNDNN); mpc_set_dc(*hd_quad,0,MPC_RNDNN);
 	/* evaluate polynomial in quadruple precision */
 	for(int i=deg-1; i>=0; i--)
 	{
 		// product and sum for derivative evaluation
-		mpc_mul(mul,*hd_quad,x_quad,MPC_RNDNN);
-		mpc_add(*hd_quad,mul,*h_quad,MPC_RNDNN);
+		mpc_mul(mul,*hd_quad,x_mp,MPC_RNDNN);
+		mpc_add(*hd_quad,mul,*h_mp,MPC_RNDNN);
 		// product and sum for polynomial evaluation
-		mpc_mul(mul,*h_quad,x_quad,MPC_RNDNN);
-		mpc_add(*h_quad,mul,poly_quad[i],MPC_RNDNN);
+		mpc_mul(mul,*h_mp,x_mp,MPC_RNDNN);
+		mpc_add(*h_mp,mul,poly_mp[i],MPC_RNDNN);
 	}
+	/* clear mpc variable */
+	mpc_clear(mul);
 }
-/* Reversal Horner's Method with Complex Quadruple Precision */
-void rhorner_quad_cmplx(const mpc_t* poly_quad,const mpc_t x_quad,const unsigned int deg,mpc_t* h_quad,mpc_t* hd_quad)
+/* Reversal Horner's Method with Complex Multi-Precision */
+void rhorner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp,mpc_t* hd_quad)
 {
 	/* initialize and set mpc variables */
 	mpc_t mul;
-	mpfr_prec_t prec = mpc_get_prec(*h_quad);
+	mpfr_prec_t prec = mpc_get_prec(*h_mp);
 	mpc_init2(mul,prec);
-	mpc_set(*h_quad,poly_quad[0],MPC_RNDNN); mpc_set_dc(*hd_quad,0,MPC_RNDNN);
+	mpc_set(*h_mp,poly_mp[0],MPC_RNDNN); mpc_set_dc(*hd_quad,0,MPC_RNDNN);
 	/* evaluate polynomial in quadruple precision */
 	for(int i=1; i<=deg; i++)
 	{
 		// product and sum for derivative evaluation
-		mpc_mul(mul,*hd_quad,x_quad,MPC_RNDNN);
-		mpc_add(*hd_quad,mul,*h_quad,MPC_RNDNN);
+		mpc_mul(mul,*hd_quad,x_mp,MPC_RNDNN);
+		mpc_add(*hd_quad,mul,*h_mp,MPC_RNDNN);
 		// product and sum for polynomial evaluation
-		mpc_mul(mul,*h_quad,x_quad,MPC_RNDNN);
-		mpc_add(*h_quad,mul,poly_quad[i],MPC_RNDNN);
+		mpc_mul(mul,*h_mp,x_mp,MPC_RNDNN);
+		mpc_add(*h_mp,mul,poly_mp[i],MPC_RNDNN);
 	}
+	/* clear mpc variable */
+	mpc_clear(mul);
 }
 #endif
