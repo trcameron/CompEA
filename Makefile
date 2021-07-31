@@ -35,6 +35,13 @@ pdf_illcond_test:
 	@rm illcond_time.aux
 	@open figures/illcond_time.pdf
 	
+pdf_specpoly_test:
+	@pdflatex --interaction=batchmode TeX/specpoly_test.tex
+	@mv specpoly_test.pdf figures/specpoly_test.pdf
+	@rm specpoly_test.log
+	@rm specpoly_test.aux
+	@open figures/specpoly_test.pdf
+	
 pdf_wellcond_test:
 	@pdflatex --interaction=batchmode TeX/wellcond_err.tex
 	@mv wellcond_err.pdf figures/wellcond_err.pdf
@@ -48,12 +55,13 @@ pdf_wellcond_test:
 	@rm wellcond_time.aux
 	@open figures/wellcond_time.pdf
 	
-pdf_specpoly_test:
-	@pdflatex --interaction=batchmode TeX/specpoly_test.tex
-	@mv specpoly_test.pdf figures/specpoly_test.pdf
-	@rm specpoly_test.log
-	@rm specpoly_test.aux
-	@open figures/specpoly_test.pdf
+run_all: install_horner_test install_illcond_test install_specpoly_test install_wellcond_test
+	./horner_test 5
+	./illcond_test
+	./specpoly_test
+	./wellcond_test
+	
+tex_all: pdf_horner_test pdf_illcond_test pdf_specpoly_test pdf_wellcond_test
 	
 uninstall:
 	@rm -f horner_test
