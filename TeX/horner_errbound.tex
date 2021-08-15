@@ -31,11 +31,11 @@
     },
     cycle list name=black white
 ]
-\addplot+[very thin, solid, mark=none] table [x=x, y=a priori error bound, col sep=comma]{data_files/horner_test.dat};
+\addplot+[very thin, solid, mark=none] table [x=x, y=a priori error bound, col sep=comma]{data_files/horner_errbound_test.dat};
 \addlegendentry{A priori error bound}
-\addplot+[very thin, densely dotted, mark=none] table [x=x, y=running error bound, col sep=comma]{data_files/horner_test.dat};
+\addplot+[very thin, densely dotted, mark=none] table [x=x, y=running error bound, col sep=comma]{data_files/horner_errbound_test.dat};
 \addlegendentry{Running error bound}
-\addplot+[very thin, dashdotted, mark=none] table [x=x, y=forward error, col sep=comma]{data_files/horner_test.dat};
+\addplot+[very thin, dashdotted, mark=none] table [x=x, y=forward error, col sep=comma]{data_files/horner_errbound_test.dat};
 \addlegendentry{Forward error}
 \end{semilogyaxis}
 \end{tikzpicture}

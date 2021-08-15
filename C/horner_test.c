@@ -6,8 +6,8 @@
 /* Main Function */
 int main(int argc,char **argv)
 {
-	/* command line argument for degree of polynomial */
-	int deg = atoi(argv[1]);
+	/* horner error bound test */
+	int deg = 5;
 	/* initialize polynomials */
 	double alpha[deg+1];
 	double complex poly[deg+1];
@@ -27,7 +27,7 @@ int main(int argc,char **argv)
 	}
 	/* initialize writing file */
 	FILE* f;
-	f = fopen("data_files/horner_test.dat","w+");
+	f = fopen("data_files/horner_errbound_test.dat","w+");
 	fprintf(f,"x, a priori error bound, running error bound, forward error\n");
 	/* initialize multi-precision variables */
 	mpfr_t eb_quad, x_quad;
@@ -40,29 +40,30 @@ int main(int argc,char **argv)
 	/* initialize testing variables */
 	const unsigned int num = 2E+3;
 	const double dx = 1E-5;
-	double comp_et = 0, quad_et = 0, x = 0.99;
-	clock_t comp_begin, comp_end, quad_begin, quad_end;
+	double comp_et = 0, quad_et = 0;
+	double complex x = 0.99 + I;
+	clock_t begin, end;
 	/* run test */
 	for(int i=0; i<=num; i++)
 	{
-		// write x value
-		fprintf(f,"%.5e, ",x);
+		// write creal(x) value
+		fprintf(f,"%.5e, ",creal(x));
 		// quadruple precision
-		mpc_set_dc(xc_quad,x+I,MPC_RNDNN);
-		quad_begin = clock();
+		mpc_set_dc(xc_quad,x,MPC_RNDNN);
+		begin = clock();
 		horner_mp_cmplx(poly_quad,xc_quad,deg,&h_quad,&hd_quad);
-		quad_end = clock();
-		quad_et += (double)(quad_end - quad_begin) / CLOCKS_PER_SEC;
+		end = clock();
+		quad_et += (double)(end - begin) / CLOCKS_PER_SEC;
 		// a priori error bound
-		mpfr_set_d(x_quad,cabs(x+I),MPFR_RNDN);
+		mpfr_set_d(x_quad,cabs(x),MPFR_RNDN);
 		horner_mp_real(alpha_quad,x_quad,deg,&eb_quad);
 		mpc_abs(x_quad,h_quad,MPFR_RNDN);
 		fprintf(f,"%.5e, ",EPS*mpfr_get_d(x_quad,MPFR_RNDN)+pow(gamma_const(2*deg),2)*mpfr_get_d(eb_quad,MPFR_RNDN));
 		// compensated arithmetic
-		comp_begin = clock();
-		horner_comp_cmplx(poly,(x+I),deg,&h,&hd,&eb);
-		comp_end = clock();
-		comp_et += (double)(comp_end - comp_begin) / CLOCKS_PER_SEC;
+		begin = clock();
+		horner_comp_cmplx(poly,x,deg,&h,&hd,&eb);
+		end = clock();
+		comp_et += (double)(end - begin) / CLOCKS_PER_SEC;
 		// running error bound
 		fprintf(f,"%.5e, ",EPS*cabs(h) + (gamma_const(4*deg+2)*eb + 2*pow(EPS,2)*cabs(h)));
 		// forward error bound
@@ -83,7 +84,7 @@ int main(int argc,char **argv)
 		mpfr_clear(alpha_quad[i]);
 	}
 	/* clear mpc variables */
-	mpc_clear(err_quad); mpc_clear(h_quad); mpc_clear(hd_quad); mpc_clear(xc_quad);
+	mpc_clear(err_quad);
 	for(int i=0; i<=deg; i++)
 	{
 		mpc_clear(poly_quad[i]);
@@ -91,7 +92,71 @@ int main(int argc,char **argv)
 	/* print elapsed times */
 	printf("comp horner elapsed time = %.4e\n",comp_et);
 	printf("quad horner elapsed time = %.4e\n",quad_et);
-	printf("ratio = %.4e\n",quad_et/comp_et);
+	printf("quad to comp ratio = %.4e\n",quad_et/comp_et);
+	
+	/* horner time test */
+	f = fopen("data_files/horner_time_test.dat","w+");
+	fprintf(f,"deg, double_time, comp_time, quad_time\n");
+	/* initialize testing variables */
+	const unsigned int min_deg = 100, max_deg = 2500, itnum = 100;
+	for(deg = min_deg; deg <= max_deg; deg+=10)
+	{
+		// write deg value
+		fprintf(f,"%d, ",deg);
+		// initialize random polynomial
+		double complex* poly = (double complex*)malloc((deg+1)*sizeof(double complex));
+		// initialize quad-precision polynomial
+		mpc_t* poly_quad = (mpc_t*)malloc((deg+1)*sizeof(mpc_t));
+		// seed random variable
+		srand(time(NULL));
+		// initialize timing variables
+		double dble_et = 0;
+		comp_et = 0; quad_et = 0;
+		for(int i=0; i<itnum; i++)
+		{
+			// store random polynomial
+			for(int i=0; i<=deg; i++)
+			{
+				double real = (double)2*rand()/RAND_MAX - 1;
+				double imag = (double)2*rand()/RAND_MAX - 1;
+				poly[i] = real + I*imag;
+			}
+			// store random value
+			x = ((double)2*rand()/RAND_MAX - 1) + I*((double)2*rand()/RAND_MAX - 1);
+			// store quad-precision polynomial
+			for(int i=0; i<=deg; i++)
+			{
+				mpc_init2(poly_quad[i],113);
+				mpc_set_dc(poly_quad[i],poly[i],MPC_RNDNN);
+			}
+			// double precision
+			begin = clock();
+			horner_cmplx(poly,x,deg,&h,&hd);
+			end = clock();
+			dble_et += (double)(end - begin) / CLOCKS_PER_SEC;
+			// compensated arithmetic
+			begin = clock();
+			horner_comp_cmplx(poly,x,deg,&h,&hd,&eb);
+			end = clock();
+			comp_et += (double)(end - begin) / CLOCKS_PER_SEC;
+			// quadruple precision
+			mpc_set_dc(xc_quad,x,MPC_RNDNN);
+			begin = clock();
+			horner_mp_cmplx(poly_quad,xc_quad,deg,&h_quad,&hd_quad);
+			end = clock();
+			quad_et += (double)(end - begin) / CLOCKS_PER_SEC;
+		}
+		// free memory
+		free(poly); free(poly_quad);
+		// write avg elapsed times
+		fprintf(f,"%.5e, ",dble_et/itnum);
+		fprintf(f,"%.5e, ",comp_et/itnum);
+		fprintf(f,"%.5e\n",quad_et/itnum);
+	}
+	/* close file */
+	fclose(f);
+	/* clear mpc variables */
+	 mpc_clear(h_quad); mpc_clear(hd_quad); mpc_clear(xc_quad);
 	/* return */
 	return 0;
 }

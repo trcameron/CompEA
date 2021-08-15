@@ -5,6 +5,7 @@
 #include <math.h>
 #include <mpfr.h>
 #include <mpc.h>
+#include <stdio.h>
 /* Global Constants */
 double EPS = DBL_EPSILON/2;
 double ETA = DBL_TRUE_MIN;
@@ -12,14 +13,20 @@ double ETA = DBL_TRUE_MIN;
 double ufp(const double p)
 {
 	double q = p/DBL_EPSILON + p;
-	return fma(q,EPS-1,q);
+	return fabs(fma(q,EPS-1,q));
 }
 /* Gamma Constant */
 double gamma_const(const unsigned int n)
 {
 	double s = 1.41421356237309504880;
-	double g = 2*EPS/(1-2*EPS);
-	return n*s*g/(1-n*s*g);
+	double g = (2*n*EPS)*s;
+	return g/((1-DBL_EPSILON)-g);
+}
+/* Fast Two Sum */
+void fast_two_sum(const double a,const double b,struct eft* res)
+{
+	res->fl_res = a + b;
+	res->fl_err = (a - res->fl_res) + b;
 }
 /* Two Sum */
 void two_sum(const double a,const double b,struct eft* res)
@@ -64,7 +71,8 @@ double extract(double* p,double sigma)
 	struct eft res;
 	for(int i=0; i<4; ++i)
 	{
-		two_sum(sigma,p[i],&res);
+		//two_sum(sigma,p[i],&res);
+		fast_two_sum(sigma,p[i],&res);
 		sigma = res.fl_res;
 		p[i] = res.fl_err;
 	}
@@ -94,6 +102,7 @@ double abs_sum(const double* p)
 double fast_acc_sum(double* p)
 {
 	// variables
+	int n = 0;
 	double phi, sigma, sigma_new, T, t, t_new, tau, u;
 	// goto label
 	start:
@@ -104,19 +113,20 @@ double fast_acc_sum(double* p)
 	}
 	t = 0;
 	do {
-		sigma = (2*T)/fma(-13,EPS,1);
-		sigma_new = extract(p,sigma);
-		tau = sigma_new - sigma;
-		t_new = t;
-		t = t_new + tau;
+		sigma = (2*T)/fma(-13,EPS,1);								// 3 flops
+		sigma_new = extract(p,sigma);								// 4(3) = 12 flops
+		tau = sigma_new - sigma;									// 1 flop
+		t_new = t;							
+		t = t_new + tau;											// 1 flop
 		if(t==0)
 		{
 			goto start;		// intermediate sum is zero, recursively apply fast_acc_sum to array of lower order parts
 		}
-		u = ufp(sigma);
-		phi = ((48*EPS)*u)/fma(-5,EPS,1);
-		T = fmin((fma(4,EPS,1.5)*(4*EPS))*sigma,(8*EPS)*u);
-	} while((fabs(t) < phi) && (4*T > ETA/EPS));
+		u = ufp(sigma);												// 4 flops
+		phi = ((48*EPS)*u)/fma(-5,EPS,1);							// 4 flops
+		T = fmin((fma(4,EPS,1.5)*(4*EPS))*sigma,(8*EPS)*u);			// 6 flops
+		n += 1;
+	} while((fabs(t) < phi) && (4*T > ETA/EPS));					// 2 flops
 	tau = (t_new - t) + tau;
 	// return
 	return t + (tau + sum(p));
@@ -181,9 +191,9 @@ void horner_comp_cmplx(const double complex* poly,const double complex x,const u
 	struct eft_cmplx_prod tpc;
 	double complex e = 0, ed = 0;
 	double complex p[4];
-	double ap[4];
+	// double ap[4];
 	// Horner's method
-	*h = poly[deg]; *hd = 0; *eb = 0;
+	*h = poly[deg]; *hd = 0; // *eb = 0;
 	for(int i=deg-1; i>=0; --i)
 	{
 		// product and sum for derivative evaluation
@@ -191,20 +201,20 @@ void horner_comp_cmplx(const double complex* poly,const double complex x,const u
 		two_sum_cmplx(tpc.fl_res,*h,eft_arr,&tsc);
 		// update hd and ed
 		*hd = tsc.fl_res;
-		//ed = ed*x + e + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
-		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err; 
-		ed = ed*x + e + fast_cmplx_acc_sum(p);
+		ed = ed*x + e + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
+		// p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		// ed = ed*x + e + fast_cmplx_acc_sum(p);
 		// product and sum for polynomial evaluation
 		two_prod_cmplx(*h,x,eft_arr,&tpc);
 		two_sum_cmplx(tpc.fl_res,poly[i],eft_arr,&tsc);
 		// update h and e
 		*h = tsc.fl_res;
-		//e = e*x + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
-		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
-		e = e*x + fast_cmplx_acc_sum(p);
+		e = e*x + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
+		// p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		// e = e*x + fast_cmplx_acc_sum(p);
 		// update error bound
-		ap[0] = cabs(tpc.fl_err1); ap[1] = cabs(tpc.fl_err2); ap[2] = cabs(tpc.fl_err3); ap[3] = cabs(tsc.fl_err);
-		*eb = *eb*cabs(x) + fast_acc_sum(ap);
+		// ap[0] = cabs(tpc.fl_err1); ap[1] = cabs(tpc.fl_err2); ap[2] = cabs(tpc.fl_err3); ap[3] = cabs(tsc.fl_err);
+		// *eb = *eb*cabs(x) + fast_acc_sum(ap);
 	}
 	// add error back into result
 	*h += e;

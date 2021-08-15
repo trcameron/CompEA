@@ -16,11 +16,17 @@ install_wellcond_test:
 	@$(CCC) $(CCOPT) $(CCLNFLAGS) -o wellcond_test C/wellcond_test.c
 	
 pdf_horner_test:
-	@pdflatex --interaction=batchmode TeX/horner_test.tex
-	@mv horner_test.pdf figures/horner_test.pdf
-	@rm horner_test.log
-	@rm horner_test.aux
-	@open figures/horner_test.pdf
+	@pdflatex --interaction=batchmode TeX/horner_errbound.tex
+	@mv horner_errbound.pdf figures/horner_errbound.pdf
+	@rm horner_errbound.log
+	@rm horner_errbound.aux
+	@open figures/horner_errbound.pdf
+	
+	@pdflatex --interaction=batchmode TeX/horner_time.tex
+	@mv horner_time.pdf figures/horner_time.pdf
+	@rm horner_time.log
+	@rm horner_time.aux
+	@open figures/horner_time.pdf
 	
 pdf_illcond_test:
 	@pdflatex --interaction=batchmode TeX/illcond_err.tex

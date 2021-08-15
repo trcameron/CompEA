@@ -1,0 +1,53 @@
+\documentclass{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+\pgfplotstableread[col sep=comma]{data_files/horner_time_test.dat}\dataA
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]1,xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\fslopea{\pgfplotstableregressiona}
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]2, xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\fqslopea{\pgfplotstableregressiona}
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]3, xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\fcslopea{\pgfplotstableregressiona}
+
+\begin{tikzpicture}
+\begin{groupplot}[
+	group style = {
+		group size = 1 by 1,
+		ylabels at = edge left,
+		yticklabels at = edge left,
+		horizontal sep = 15pt,
+	},
+	ylabel = {Elapsed Time (s)},
+	legend pos = north west,
+	legend style = {nodes={scale=0.55}},
+    	legend image code/.code={
+    	\draw[mark repeat=2,mark phase=2]
+    	plot coordinates {
+    		(0cm,0cm)
+    		(0.3cm,0cm)        %% default is (0.3cm,0cm)
+    		(0.5cm,0cm)         %% default is (0.6cm,0cm)
+   	 };%
+    	},
+    	cycle list name=black white
+]
+\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=CompHorner without FastAcccSum]
+\addplot+[thin, solid, mark=none] table [x=deg, y=double_time, col sep=comma]{data_files/horner_time_test.dat};
+\addlegendentry{Double Precision, slope = {\pgfmathprintnumber[precision=2]{\fslopea}}}
+\addplot+[thin, densely dotted, mark=none] table [x=deg, y=comp_time, col sep=comma]{data_files/horner_time_test.dat};
+\addlegendentry{Compensated Arithmetic, slope = {\pgfmathprintnumber[precision=2]{\fqslopea}}}
+\addplot+[thin, dashdotted, mark=none] table [x=deg, y=quad_time, col sep=comma]{data_files/horner_time_test.dat};
+\addlegendentry{Quadruple Precision, slope = {\pgfmathprintnumber[precision=2]{\fcslopea}}}
+\end{groupplot}
+\end{tikzpicture}
+
+\end{document}
