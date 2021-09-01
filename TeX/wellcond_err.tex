@@ -10,27 +10,29 @@
 % create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]2, xmode=log, ymode=log}]{regression}{\dataA}
 % store slope
-\xdef\fslopea{\pgfplotstableregressiona}
+\xdef\easlopea{\pgfplotstableregressiona}
 % create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]4, xmode=log, ymode=log}]{regression}{\dataA}
 % store slope
-\xdef\fqslopea{\pgfplotstableregressiona}
+\xdef\compslopea{\pgfplotstableregressiona}
+% create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]6, xmode=log, ymode=log}]{regression}{\dataA}
 % store slope
-\xdef\fcslopea{\pgfplotstableregressiona}
+\xdef\quadslopea{\pgfplotstableregressiona}
 
 \pgfplotstableread[col sep=comma]{data_files/wellcond_nat_test.dat}\dataB
 % create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]2, xmode=log, ymode=log}]{regression}{\dataB}
 % store slope
-\xdef\fslopeb{\pgfplotstableregressiona}
+\xdef\easlopeb{\pgfplotstableregressiona}
 % create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]4, xmode=log, ymode=log}]{regression}{\dataB}
 % store slope
-\xdef\fqslopeb{\pgfplotstableregressiona}
+\xdef\compslopeb{\pgfplotstableregressiona}
+% create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]6, xmode=log, ymode=log}]{regression}{\dataB}
 % store slope
-\xdef\fcslopeb{\pgfplotstableregressiona}
+\xdef\quadslopeb{\pgfplotstableregressiona}
 
 \begin{tikzpicture}
 \begin{groupplot}[
@@ -53,20 +55,20 @@
     	},
     	cycle list name=black white
 ]
-\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=Random Coefficients]
+\nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log,title=Random Coefficients]
 \addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/wellcond_rand_test.dat};
-\addlegendentry{Ehrlich-Aberth, slope = {\pgfmathprintnumber[precision=2]{\fslopea}}}
-\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/wellcond_rand_test.dat};
-\addlegendentry{Ehrlich-Aberth-Quad, slope = {\pgfmathprintnumber[precision=2]{\fqslopea}}}
+\addlegendentry{Ehrlich-Aberth: {\pgfmathprintnumber[precision=2]{\easlopea}}}
 \addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/wellcond_rand_test.dat};
-\addlegendentry{Ehrlich-Aberth-Comp, slope = {\pgfmathprintnumber[precision=2]{\fcslopea}}}
-\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=Natural Coefficients]
+\addlegendentry{Ehrlich-Aberth-Comp: {\pgfmathprintnumber[precision=2]{\compslopea}}}
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/wellcond_rand_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad: {\pgfmathprintnumber[precision=2]{\quadslopea}}}
+\nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log,title=Natural Coefficients]
 \addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/wellcond_nat_test.dat};
-\addlegendentry{Ehrlich-Aberth, slope = {\pgfmathprintnumber[precision=2]{\fslopeb}}}
-\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/wellcond_nat_test.dat};
-\addlegendentry{Ehrlich-Aberth-Quad, slope = {\pgfmathprintnumber[precision=2]{\fqslopeb}}}
+\addlegendentry{Ehrlich-Aberth: {\pgfmathprintnumber[precision=2]{\easlopeb}}}
 \addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/wellcond_nat_test.dat};
-\addlegendentry{Ehrlich-Aberth-Comp, slope = {\pgfmathprintnumber[precision=2]{\fcslopeb}}}
+\addlegendentry{Ehrlich-Aberth-Comp: {\pgfmathprintnumber[precision=2]{\compslopeb}}}
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/wellcond_nat_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad: {\pgfmathprintnumber[precision=2]{\quadslopeb}}}
 \end{groupplot}
 \end{tikzpicture}
 

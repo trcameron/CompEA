@@ -28,20 +28,20 @@
     	},
     	cycle list name=black white
 ]
-\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=Roots on the Unit Disk]
+\nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log,title=Roots on the Unit Disk]
 \addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
 \addlegendentry{Ehrlich-Aberth}
-\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
-\addlegendentry{Ehrlich-Aberth-Quad}
 \addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
 \addlegendentry{Ehrlich-Aberth-Comp}
-\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=Truncated Exponential]
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/illcond_unitdisk_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad}
+\nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log,title=Truncated Exponential]
 \addplot+[thin, solid, mark=none] table [x=degree, y=ea_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
 \addlegendentry{Ehrlich-Aberth}
-\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
-\addlegendentry{Ehrlich-Aberth-Quad}
 \addplot+[thin, dashdotted, mark=none] table [x=degree, y=ea_comp_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
 \addlegendentry{Ehrlich-Aberth-Comp}
+\addplot+[thin, densely dotted, mark=none] table [x=degree, y=ea_quad_err, col sep=comma]{data_files/illcond_truncexp_test.dat};
+\addlegendentry{Ehrlich-Aberth-Quad}
 \end{groupplot}
 \end{tikzpicture}
 

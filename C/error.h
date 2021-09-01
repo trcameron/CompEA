@@ -20,8 +20,6 @@ double max_value(const double* values,const unsigned int n)
 void roots_to_poly(double complex* poly,const double complex* roots,const double complex lead_coeff,const unsigned int deg)
 {
 	/* initialize multi-precision variables */
-	mpfr_t err_mp, abs_mp;
-	mpfr_init2(err_mp,PREC); mpfr_init2(abs_mp,PREC);
 	mpc_t poly_mp[deg+1], roots_mp[deg], mul_mp, sub_mp;
 	mpc_init2(mul_mp,PREC); mpc_init2(sub_mp,PREC);
 	for(int i=0; i<deg; i++)
@@ -60,8 +58,6 @@ void roots_to_poly(double complex* poly,const double complex* roots,const double
 		poly[i] = mpc_get_dc(poly_mp[deg-i-1],MPC_RNDNN);
 	}
 	poly[deg] = lead_coeff;
-	/* clear mpfr variables */
-	mpfr_clears(err_mp, abs_mp, (mpfr_ptr) 0);
 	/* clear mpc variables */
 	mpc_clear(mul_mp); mpc_clear(sub_mp);
 	for(int i=0; i<deg; i++)
@@ -148,8 +144,8 @@ double back_err(const double complex* poly,const double complex* roots,const uns
 /* forward error */
 double forw_err(const double complex* roots,const double complex* exact_roots,const unsigned int deg)
 {
-	// spectral variation 1
-	double sv1 = 0;
+	// spectral variation
+	double sv = 0;
 	bool* used = (bool*)malloc(deg*sizeof(bool));
 	for(int i=0; i<deg; i++)
 	{
@@ -163,7 +159,8 @@ double forw_err(const double complex* roots,const double complex* exact_roots,co
 		{
 			if(!used[j])
 			{
-				double temp = cabs(roots[i]-exact_roots[j]);
+				double p[2] = {cabs(exact_roots[j]),1};
+				double temp = cabs(roots[i]-exact_roots[j])/max_value(p,2);
 				if(temp < min)
 				{
 					min = temp;
@@ -172,59 +169,15 @@ double forw_err(const double complex* roots,const double complex* exact_roots,co
 			}
 		}
 		used[ind] = true;
-		if(min > sv1)
+		if(min > sv)
 		{
-			sv1 = min;
+			sv = min;
 		}
 	}
-	// spectral variation 2
-	double sv2 = 0;
-	for(int i=0; i<deg; i++)
-	{
-		used[i] = false;
-	}
-	for(int i=0; i<deg; i++)
-	{
-		double min = DBL_MAX;
-		int ind;
-		for(int j=0; j<deg; j++)
-		{
-			if(!used[j])
-			{
-				double temp = cabs(exact_roots[i] - roots[j]);
-				if(temp < min)
-				{
-					min = temp;
-					ind = j;
-				}
-			}
-		}
-		used[ind] = true;
-		if(min > sv2)
-		{
-			sv2 = min;
-		}
-	}
-	// largest exact root
-	double max = cabs(exact_roots[0]);
-	for(int i=1; i<deg; i++)
-	{
-		double temp = cabs(exact_roots[i]);
-		if(temp > max)
-		{
-			max = temp;
-		}
-	}
-	// return largest value of sv1/max, sv2/max, and EPS
-	double p[2];
-	if(sv1 < sv2)
-	{
-		p[0] = sv1/max; p[1] = EPS;
-	}
-	else
-	{
-		p[0] = sv2/max; p[1] = EPS;
-	}
+	// free used
+	free(used);
+	// return largest value of sv and EPS
+	double p[2] = {sv,EPS};
 	return max_value(p,2);
 }
 /* maximum condition number */
@@ -279,6 +232,38 @@ double max_cond(const double complex* poly,const double complex* roots,const uns
 	}
 	mpc_clear(poly_mp[deg]);
 	// return maximum condition number
+	return max;
+}
+/* maximum condition number 2 */
+double max_cond2(const double complex* poly,const double complex* roots,const unsigned int deg)
+{
+	double alpha[deg+1], b, eb;
+	double complex h, hd;
+	for(int i=0; i<=deg; i++)
+	{
+		alpha[i] = cabs(poly[i]);
+	}
+	double max = 0, temp;
+	for(int i=0; i<deg; i++)
+	{
+		double x = cabs(roots[i]);
+		if(x > 1)
+		{
+			rhorner_dble(alpha,1/x,deg,&b);
+			rhorner_comp_cmplx(poly,1/roots[i],deg,&h,&hd,&eb);
+			temp = x*b/cabs(hd);
+		}
+		else
+		{
+			horner_dble(alpha,x,deg,&b);
+			horner_comp_cmplx(poly,roots[i],deg,&h,&hd,&eb);
+			temp = b/(x*cabs(hd));
+		}
+		if(temp > max)
+		{
+			max = temp;
+		}
+	}
 	return max;
 }
 #endif

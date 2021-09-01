@@ -96,9 +96,9 @@ int main(int argc,char **argv)
 	
 	/* horner time test */
 	f = fopen("data_files/horner_time_test.dat","w+");
-	fprintf(f,"deg, double_time, comp_time, quad_time\n");
+	fprintf(f,"deg, double_time, priest_comp_time, accsum_comp_time, quad_time\n");
 	/* initialize testing variables */
-	const unsigned int min_deg = 100, max_deg = 2500, itnum = 100;
+	const unsigned int min_deg = 100, max_deg = 2500, itnum = 256;
 	for(deg = min_deg; deg <= max_deg; deg+=10)
 	{
 		// write deg value
@@ -107,13 +107,13 @@ int main(int argc,char **argv)
 		double complex* poly = (double complex*)malloc((deg+1)*sizeof(double complex));
 		// initialize quad-precision polynomial
 		mpc_t* poly_quad = (mpc_t*)malloc((deg+1)*sizeof(mpc_t));
-		// seed random variable
-		srand(time(NULL));
 		// initialize timing variables
-		double dble_et = 0;
+		double dble_et = 0, priest_comp_et = 0, accsum_comp_et = 0;
 		comp_et = 0; quad_et = 0;
 		for(int i=0; i<itnum; i++)
 		{
+			// seed random variable
+			srand(time(NULL));
 			// store random polynomial
 			for(int i=0; i<=deg; i++)
 			{
@@ -131,18 +131,22 @@ int main(int argc,char **argv)
 			}
 			// double precision
 			begin = clock();
-			horner_cmplx(poly,x,deg,&h,&hd);
+			horner(poly,x,deg,&h);
 			end = clock();
-			dble_et += (double)(end - begin) / CLOCKS_PER_SEC;
+			dble_et += ((double)(end - begin)) / CLOCKS_PER_SEC;
 			// compensated arithmetic
 			begin = clock();
-			horner_comp_cmplx(poly,x,deg,&h,&hd,&eb);
+			priest_comp_horner(poly,x,deg,&h);
 			end = clock();
-			comp_et += (double)(end - begin) / CLOCKS_PER_SEC;
+			priest_comp_et += ((double)(end - begin)) / CLOCKS_PER_SEC;
+			begin = clock();
+			accsum_comp_horner(poly,x,deg,&h);
+			end = clock();
+			accsum_comp_et += ((double)(end - begin)) / CLOCKS_PER_SEC;
 			// quadruple precision
 			mpc_set_dc(xc_quad,x,MPC_RNDNN);
 			begin = clock();
-			horner_mp_cmplx(poly_quad,xc_quad,deg,&h_quad,&hd_quad);
+			mp_horner(poly_quad,xc_quad,deg,&h_quad);
 			end = clock();
 			quad_et += (double)(end - begin) / CLOCKS_PER_SEC;
 		}
@@ -150,7 +154,8 @@ int main(int argc,char **argv)
 		free(poly); free(poly_quad);
 		// write avg elapsed times
 		fprintf(f,"%.5e, ",dble_et/itnum);
-		fprintf(f,"%.5e, ",comp_et/itnum);
+		fprintf(f,"%.5e, ",priest_comp_et/itnum);
+		fprintf(f,"%.5e, ",accsum_comp_et/itnum);
 		fprintf(f,"%.5e\n",quad_et/itnum);
 	}
 	/* close file */

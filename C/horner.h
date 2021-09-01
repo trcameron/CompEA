@@ -82,7 +82,7 @@ double extract(double* p,double sigma)
 double sum(const double* p)
 {
 	double s = p[0];
-	for(int i=1; i<4; i++)
+	for(int i=1; i<4; ++i)
 	{
 		s += p[i];
 	}
@@ -92,7 +92,7 @@ double sum(const double* p)
 double abs_sum(const double* p)
 {
 	double s = fabs(p[0]);
-	for(int i=1; i<4; i++)
+	for(int i=1; i<4; ++i)
 	{
 		s += fabs(p[i]);
 	}
@@ -140,12 +140,67 @@ double complex fast_cmplx_acc_sum(double complex* p)
 	// return
 	return fast_acc_sum(realp)+I*fast_acc_sum(imagp);
 }
+/* Sort */
+void sort(double *p)
+{
+	double max, temp;
+	int ind, i, j;
+	for(i=0; i<3; ++i)
+	{
+		max = fabs(p[i]);
+		ind = i;
+		for(j=i+1; j<4; ++j)
+		{
+			temp = fabs(p[j]);
+			if(temp > max)
+			{
+				max = temp;
+				ind = j;
+			}
+		}
+		if(ind != i)
+		{
+			temp = p[i];
+			p[i] = p[ind];
+			p[ind] = temp;
+		}
+	}
+}
+/* Priest Summation */
+double priest_sum(double* p)
+{
+	// sort p
+	sort(p);
+	// initialize
+	double s = p[0], c = 0, y, u, t, v, z;
+	for(int i=1; i<4; ++i)
+	{
+		y = c + p[i];
+		u = p[i] - (y - c);
+		t = y + s;
+		v = y - (t - s);
+		z = u + v;
+		s = t + z;
+		c = z - (s - t);
+	}
+	// return
+	return s;
+}
+/* Priest Complex Summation */
+double complex priest_cmplx_sum(double complex* p)
+{
+	// variables
+	double realp[4] = {creal(p[0]),creal(p[1]),creal(p[2]),creal(p[3])};
+	double imagp[4] = {cimag(p[0]),cimag(p[1]),cimag(p[2]),cimag(p[3])};
+	// return
+	return priest_sum(realp)+I*priest_sum(imagp);
+}
 /* Horner Method with Double Real Arithmetic */
 void horner_dble(const double* poly,const double x,const unsigned int deg,double* h)
 {
 	// Horner's method
 	*h = poly[deg];
-	for(int i=deg-1; i>=0; i--)
+	for(int i=deg-1; i>=0; --i)
 	{
 		*h = fma(*h,x,poly[i]);
 	}
@@ -155,7 +210,7 @@ void rhorner_dble(const double* poly,const double x,const unsigned int deg,doubl
 {
 	// Reversal Horner's method
 	*h = poly[0];
-	for(int i=1; i<=deg; i++)
+	for(int i=1; i<=deg; ++i)
 	{
 		*h = fma(*h,x,poly[i]);
 	}
@@ -165,7 +220,7 @@ void horner_cmplx(const double complex *poly,const double complex x,const unsign
 {
 	// Horner's method
 	*h = poly[deg]; *hd = 0;
-	for(int i=deg-1; i>=0; i--)
+	for(int i=deg-1; i>=0; --i)
 	{
 		*hd = *hd*x + *h;
 		*h = *h*x + poly[i];
@@ -176,9 +231,19 @@ void rhorner_cmplx(const double complex *poly,const double complex x,const unsig
 {
 	// Reversal Horner's method
 	*h = poly[0]; *hd = 0;
-	for(int i=1; i<=deg; i++)
+	for(int i=1; i<=deg; ++i)
 	{
 		*hd = *hd*x + *h;
+		*h = *h*x + poly[i];
+	}
+}
+/* Horner Method */
+void horner(const double complex *poly,const double complex x,const unsigned int deg,double complex* h)
+{
+	// Horner's method
+	*h = poly[deg];
+	for(int i=deg-1; i>=0; --i)
+	{
 		*h = *h*x + poly[i];
 	}
 }
@@ -191,9 +256,9 @@ void horner_comp_cmplx(const double complex* poly,const double complex x,const u
 	struct eft_cmplx_prod tpc;
 	double complex e = 0, ed = 0;
 	double complex p[4];
-	// double ap[4];
+    double ap[4];
 	// Horner's method
-	*h = poly[deg]; *hd = 0; // *eb = 0;
+	*h = poly[deg]; *hd = 0; *eb = 0;
 	for(int i=deg-1; i>=0; --i)
 	{
 		// product and sum for derivative evaluation
@@ -201,20 +266,21 @@ void horner_comp_cmplx(const double complex* poly,const double complex x,const u
 		two_sum_cmplx(tpc.fl_res,*h,eft_arr,&tsc);
 		// update hd and ed
 		*hd = tsc.fl_res;
-		ed = ed*x + e + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
-		// p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
-		// ed = ed*x + e + fast_cmplx_acc_sum(p);
+		// ed = ed*x + e + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
+		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		ed = ed*x + e + priest_cmplx_sum(p);
 		// product and sum for polynomial evaluation
 		two_prod_cmplx(*h,x,eft_arr,&tpc);
 		two_sum_cmplx(tpc.fl_res,poly[i],eft_arr,&tsc);
 		// update h and e
 		*h = tsc.fl_res;
-		e = e*x + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
-		// p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
-		// e = e*x + fast_cmplx_acc_sum(p);
+		// e = e*x + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
+		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		e = e*x + priest_cmplx_sum(p);
 		// update error bound
-		// ap[0] = cabs(tpc.fl_err1); ap[1] = cabs(tpc.fl_err2); ap[2] = cabs(tpc.fl_err3); ap[3] = cabs(tsc.fl_err);
-		// *eb = *eb*cabs(x) + fast_acc_sum(ap);
+        // *eb = *eb*cabs(x) + (cabs(tpc.fl_err1) + cabs(tpc.fl_err2) + cabs(tpc.fl_err3) + cabs(tsc.fl_err));
+		ap[0] = cabs(tpc.fl_err1); ap[1] = cabs(tpc.fl_err2); ap[2] = cabs(tpc.fl_err3); ap[3] = cabs(tsc.fl_err);
+		*eb = *eb*cabs(x) + priest_sum(ap);
 	}
 	// add error back into result
 	*h += e;
@@ -239,24 +305,73 @@ void rhorner_comp_cmplx(const double complex* poly,const double complex x,const 
 		two_sum_cmplx(tpc.fl_res,*h,eft_arr,&tsc);
 		// update hd and ed
 		*hd = tsc.fl_res;
-		//ed = ed*x + e + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
-		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err; 
-		ed = ed*x + e + fast_cmplx_acc_sum(p);
+		// ed = ed*x + e + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
+		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		ed = ed*x + e + priest_cmplx_sum(p);
 		// product and sum for polynomial evaluation
 		two_prod_cmplx(*h,x,eft_arr,&tpc);
 		two_sum_cmplx(tpc.fl_res,poly[i],eft_arr,&tsc);
 		// update h and e
 		*h = tsc.fl_res;
-		//e = e*x + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
+		// e = e*x + (tpc.fl_err1 + tpc.fl_err2 + tpc.fl_err3 + tsc.fl_err);
 		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
-		e = e*x + fast_cmplx_acc_sum(p);
+		e = e*x + priest_cmplx_sum(p);
 		// update error bound
+        // *eb = *eb*cabs(x) + (cabs(tpc.fl_err1) + cabs(tpc.fl_err2) + cabs(tpc.fl_err3) + cabs(tsc.fl_err));
 		ap[0] = cabs(tpc.fl_err1); ap[1] = cabs(tpc.fl_err2); ap[2] = cabs(tpc.fl_err3); ap[3] = cabs(tsc.fl_err);
-		*eb = *eb*cabs(x) + fast_acc_sum(ap);
+		*eb = *eb*cabs(x) + priest_sum(ap);
 	}
 	// add error back into result
 	*h += e;
 	*hd += ed;
+}
+/* Priest CompHorner */
+void priest_comp_horner(const double complex *poly,const double complex x,const unsigned int deg,double complex* h)
+{
+	// local variables
+	struct eft eft_arr[6];
+	struct eft_cmplx_sum tsc;
+	struct eft_cmplx_prod tpc;
+	double complex e = 0;
+	double complex p[4];
+	// Horner's method
+	*h = poly[deg];
+	for(int i=deg-1; i>=0; --i)
+	{
+		// product and sum for polynomial evaluation
+		two_prod_cmplx(*h,x,eft_arr,&tpc);
+		two_sum_cmplx(tpc.fl_res,poly[i],eft_arr,&tsc);
+		// update h and e
+		*h = tsc.fl_res;
+		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		e = e*x + priest_cmplx_sum(p);
+	}
+	// add error back into result
+	*h += e;
+}
+/* AccSum CompHorner */
+void accsum_comp_horner(const double complex *poly,const double complex x,const unsigned int deg,double complex* h)
+{
+	// local variables
+	struct eft eft_arr[6];
+	struct eft_cmplx_sum tsc;
+	struct eft_cmplx_prod tpc;
+	double complex e = 0;
+	double complex p[4];
+	// Horner's method
+	*h = poly[deg];
+	for(int i=deg-1; i>=0; --i)
+	{
+		// product and sum for polynomial evaluation
+		two_prod_cmplx(*h,x,eft_arr,&tpc);
+		two_sum_cmplx(tpc.fl_res,poly[i],eft_arr,&tsc);
+		// update h and e
+		*h = tsc.fl_res;
+		p[0] = tpc.fl_err1; p[1] = tpc.fl_err2; p[2] = tpc.fl_err3; p[3] = tsc.fl_err;
+		e = e*x + fast_cmplx_acc_sum(p);
+	}
+	// add error back into result
+	*h += e;
 }
 /* Horner's Method with Real Multi-Precision */
 void horner_mp_real(const mpfr_t* poly_mp,const mpfr_t x_mp,const unsigned int deg,mpfr_t* h_mp)
@@ -267,7 +382,7 @@ void horner_mp_real(const mpfr_t* poly_mp,const mpfr_t x_mp,const unsigned int d
 	mpfr_init2(mul,prec);
 	mpfr_set(*h_mp,poly_mp[deg],MPFR_RNDN);
 	/* evaluate polynomial in quadruple precision */
-	for(int i=deg-1; i>=0; i--)
+	for(int i=deg-1; i>=0; --i)
 	{
 		mpfr_mul(mul,*h_mp,x_mp,MPFR_RNDN);
 		mpfr_add(*h_mp,mul,poly_mp[i],MPFR_RNDN);
@@ -284,7 +399,7 @@ void rhorner_mp_real(const mpfr_t* poly_mp,const mpfr_t x_mp,const unsigned int 
 	mpfr_init2(mul,prec);
 	mpfr_set(*h_mp,poly_mp[0],MPFR_RNDN);
 	/* evaluate polynomial in quadruple precision */
-	for(int i=1; i<=deg; i++)
+	for(int i=1; i<=deg; ++i)
 	{
 		mpfr_mul(mul,*h_mp,x_mp,MPFR_RNDN);
 		mpfr_add(*h_mp,mul,poly_mp[i],MPFR_RNDN);
@@ -293,19 +408,19 @@ void rhorner_mp_real(const mpfr_t* poly_mp,const mpfr_t x_mp,const unsigned int 
 	mpfr_clear(mul);		
 } 
 /* Horner's Method with Complex Multi-Precision */
-void horner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp,mpc_t* hd_quad)
+void horner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp,mpc_t* hd_mp)
 {
 	/* initialize and set mpc variables */
 	mpc_t mul;
 	mpfr_prec_t prec = mpc_get_prec(*h_mp);
 	mpc_init2(mul,prec);
-	mpc_set(*h_mp,poly_mp[deg],MPC_RNDNN); mpc_set_dc(*hd_quad,0,MPC_RNDNN);
+	mpc_set(*h_mp,poly_mp[deg],MPC_RNDNN); mpc_set_dc(*hd_mp,0,MPC_RNDNN);
 	/* evaluate polynomial in quadruple precision */
-	for(int i=deg-1; i>=0; i--)
+	for(int i=deg-1; i>=0; --i)
 	{
 		// product and sum for derivative evaluation
-		mpc_mul(mul,*hd_quad,x_mp,MPC_RNDNN);
-		mpc_add(*hd_quad,mul,*h_mp,MPC_RNDNN);
+		mpc_mul(mul,*hd_mp,x_mp,MPC_RNDNN);
+		mpc_add(*hd_mp,mul,*h_mp,MPC_RNDNN);
 		// product and sum for polynomial evaluation
 		mpc_mul(mul,*h_mp,x_mp,MPC_RNDNN);
 		mpc_add(*h_mp,mul,poly_mp[i],MPC_RNDNN);
@@ -314,19 +429,37 @@ void horner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int de
 	mpc_clear(mul);
 }
 /* Reversal Horner's Method with Complex Multi-Precision */
-void rhorner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp,mpc_t* hd_quad)
+void rhorner_mp_cmplx(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp,mpc_t* hd_mp)
 {
 	/* initialize and set mpc variables */
 	mpc_t mul;
 	mpfr_prec_t prec = mpc_get_prec(*h_mp);
 	mpc_init2(mul,prec);
-	mpc_set(*h_mp,poly_mp[0],MPC_RNDNN); mpc_set_dc(*hd_quad,0,MPC_RNDNN);
+	mpc_set(*h_mp,poly_mp[0],MPC_RNDNN); mpc_set_dc(*hd_mp,0,MPC_RNDNN);
 	/* evaluate polynomial in quadruple precision */
-	for(int i=1; i<=deg; i++)
+	for(int i=1; i<=deg; ++i)
 	{
 		// product and sum for derivative evaluation
-		mpc_mul(mul,*hd_quad,x_mp,MPC_RNDNN);
-		mpc_add(*hd_quad,mul,*h_mp,MPC_RNDNN);
+		mpc_mul(mul,*hd_mp,x_mp,MPC_RNDNN);
+		mpc_add(*hd_mp,mul,*h_mp,MPC_RNDNN);
+		// product and sum for polynomial evaluation
+		mpc_mul(mul,*h_mp,x_mp,MPC_RNDNN);
+		mpc_add(*h_mp,mul,poly_mp[i],MPC_RNDNN);
+	}
+	/* clear mpc variable */
+	mpc_clear(mul);
+}
+/* mp horner */
+void mp_horner(const mpc_t* poly_mp,const mpc_t x_mp,const unsigned int deg,mpc_t* h_mp)
+{
+	/* initialize and set mpc variables */
+	mpc_t mul;
+	mpfr_prec_t prec = mpc_get_prec(*h_mp);
+	mpc_init2(mul,prec);
+	mpc_set(*h_mp,poly_mp[deg],MPC_RNDNN);
+	/* evaluate polynomial in quadruple precision */
+	for(int i=deg-1; i>=0; --i)
+	{
 		// product and sum for polynomial evaluation
 		mpc_mul(mul,*h_mp,x_mp,MPC_RNDNN);
 		mpc_add(*h_mp,mul,poly_mp[i],MPC_RNDNN);

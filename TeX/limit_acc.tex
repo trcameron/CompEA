@@ -1,0 +1,46 @@
+\documentclass{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{compat=1.18}
+
+\newcommand\cond[2]{\operatorname{cond}\left(#1,#2\right)}
+
+\begin{document}
+
+\begin{tikzpicture}
+\begin{groupplot}[
+	group style = {
+		group size = 1 by 1,
+		ylabels at = edge left,
+		yticklabels at = edge left,
+		horizontal sep = 15pt,
+		vertical sep = 50pt,
+	},
+	ylabel = {Relative Forward Error},
+	legend pos = north west,
+	legend style = {nodes={scale=0.55}},
+    	legend image code/.code={
+    	\draw[mark repeat=2,mark phase=2]
+    	plot coordinates {
+    		(0cm,0cm)
+    		(0.3cm,0cm)        %% default is (0.3cm,0cm)
+    		(0.5cm,0cm)         %% default is (0.6cm,0cm)
+   	 };%
+    	},
+    	cycle list name=black white
+]
+\nextgroupplot[xlabel = {Condition Number}, xmode=log,ymode=log,title=Limiting Accuracy]
+\addplot+[thin, solid, mark=none] table [x=cond, y=ea_bound, col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{$\widetilde{\gamma}_{2m}\cond{p}{\zeta_{m}}$}
+\addplot+[thin, dashdotted, mark=none] table [x=cond, y=ea_err, col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{Ehrlich-Aberth}
+\addplot+[thin, densely dashed, mark=none] table [x=cond, y=comp_bound, col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{$\mu+\tilde{\gamma}_{2m}^{2}\cond{p}{\zeta_{m}}$}
+\addplot+[thin, densely dotted, mark=none] table [x=cond, y=comp_err, col sep=comma]{data_files/chebyshev_test.dat};
+\addlegendentry{Ehrlich-Aberth-Comp}
+\end{groupplot}
+\end{tikzpicture}
+
+\end{document}

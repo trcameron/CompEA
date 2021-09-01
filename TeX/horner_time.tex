@@ -10,14 +10,19 @@
 % create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]1,xmode=log, ymode=log}]{regression}{\dataA}
 % store slope
-\xdef\fslopea{\pgfplotstableregressiona}
+\xdef\hslope{\pgfplotstableregressiona}
 % create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]2, xmode=log, ymode=log}]{regression}{\dataA}
 % store slope
-\xdef\fqslopea{\pgfplotstableregressiona}
+\xdef\pslope{\pgfplotstableregressiona}
+% create the regression column:
 \pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]3, xmode=log, ymode=log}]{regression}{\dataA}
 % store slope
-\xdef\fcslopea{\pgfplotstableregressiona}
+\xdef\aslope{\pgfplotstableregressiona}
+% create the regression column:
+\pgfplotstablecreatecol[linear regression={x=[index]0,y=[index]4, xmode=log, ymode=log}]{regression}{\dataA}
+% store slope
+\xdef\qslope{\pgfplotstableregressiona}
 
 \begin{tikzpicture}
 \begin{groupplot}[
@@ -40,13 +45,15 @@
     	},
     	cycle list name=black white
 ]
-\nextgroupplot[xlabel = {degree}, xmode=log,ymode=log,title=CompHorner without FastAcccSum]
-\addplot+[thin, solid, mark=none] table [x=deg, y=double_time, col sep=comma]{data_files/horner_time_test.dat};
-\addlegendentry{Double Precision, slope = {\pgfmathprintnumber[precision=2]{\fslopea}}}
-\addplot+[thin, densely dotted, mark=none] table [x=deg, y=comp_time, col sep=comma]{data_files/horner_time_test.dat};
-\addlegendentry{Compensated Arithmetic, slope = {\pgfmathprintnumber[precision=2]{\fqslopea}}}
+\nextgroupplot[xlabel = {Degree}, xmode=log,ymode=log]
 \addplot+[thin, dashdotted, mark=none] table [x=deg, y=quad_time, col sep=comma]{data_files/horner_time_test.dat};
-\addlegendentry{Quadruple Precision, slope = {\pgfmathprintnumber[precision=2]{\fcslopea}}}
+\addlegendentry{QuadHorner: {\pgfmathprintnumber[precision=2]{\qslope}}}
+\addplot+[thin, densely dashed, mark=none] table [x=deg, y=accsum_comp_time, col sep=comma]{data_files/horner_time_test.dat};
+\addlegendentry{CompHorner w/ AccSum: {\pgfmathprintnumber[precision=2]{\aslope}}}
+\addplot+[thin, densely dotted, mark=none] table [x=deg, y=priest_comp_time, col sep=comma]{data_files/horner_time_test.dat};
+\addlegendentry{CompHorner w/ DbleCompSum: {\pgfmathprintnumber[precision=2]{\pslope}}}
+\addplot+[thin, solid, mark=none] table [x=deg, y=double_time, col sep=comma]{data_files/horner_time_test.dat};
+\addlegendentry{Horner: {\pgfmathprintnumber[precision=2]{\hslope}}}
 \end{groupplot}
 \end{tikzpicture}
 

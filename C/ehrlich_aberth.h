@@ -44,6 +44,8 @@ void correction_quad(const mpc_t* roots_quad,const mpc_t h_quad,const mpc_t hd_q
 	mpc_mul(*corr_quad,h_quad,*corr_quad,MPC_RNDNN);
 	mpc_sub(*corr_quad,hd_quad,*corr_quad,MPC_RNDNN);
 	mpc_div(*corr_quad,h_quad,*corr_quad,MPC_RNDNN);
+	// clear mpc variables
+	mpc_clear(temp);
 }
 /* reverse ehrlich aberth correction term */
 double complex rcorrection(const double complex* roots,const double complex h,const double complex hd,const unsigned int deg,const unsigned int j)
@@ -87,6 +89,8 @@ void rcorrection_quad(const mpc_t* roots_quad,const mpc_t h_quad,const mpc_t hd_
 	mpc_sqr(temp,roots_quad[j],MPC_RNDNN);
 	mpc_mul(temp,temp,h_quad,MPC_RNDNN);
 	mpc_div(*corr_quad,temp,*corr_quad,MPC_RNDNN);
+	// clear mpc variables
+	mpc_clear(temp);
 }
 /* ehrlich_aberth*/
 void ehrlich_aberth(const double complex* poly,double complex* roots,const unsigned int deg,const unsigned int itmax)
@@ -109,7 +113,7 @@ void ehrlich_aberth(const double complex* poly,double complex* roots,const unsig
 	// update initial estimates
 	for(int i=0; i<=deg; i++)
 	{
-		alpha[i] = alpha[i]*fma(3.8,i,1);
+		alpha[i] = alpha[i]*fma(3.8284271247461900976,i,1);
 	}
 	for(int i=0; i<itmax; i++)
 	{
@@ -183,7 +187,7 @@ void ehrlich_aberth_comp(const double complex* poly,double complex* roots,const 
 	// update initial estimates
 	for(int i=0; i<=deg; i++)
 	{
-		alpha[i] = alpha[i]*fma(3.8,i,1);
+		alpha[i] = alpha[i]*fma(3.8284271247461900976,i,1);
 	}
 	for(int i=0; i<itmax; i++)
 	{
@@ -307,7 +311,7 @@ void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned
 	// update initial estiamtes
 	for(int i=0; i<=deg; i++)
 	{
-		mpfr_mul_d(alpha_quad[i],alpha_quad[i],fma(3.8,i,1),MPFR_RNDN);
+		mpfr_mul_d(alpha_quad[i],alpha_quad[i],fma(3.8284271247461900976,i,1),MPFR_RNDN);
 	}
 	for(int i=0; i<itmax; i++)
 	{

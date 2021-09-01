@@ -22,7 +22,7 @@ pdf_horner_test:
 	@rm horner_errbound.aux
 	@open figures/horner_errbound.pdf
 	
-	@pdflatex --interaction=batchmode TeX/horner_time.tex
+	@pdflatex TeX/horner_time.tex
 	@mv horner_time.pdf figures/horner_time.pdf
 	@rm horner_time.log
 	@rm horner_time.aux
@@ -47,6 +47,12 @@ pdf_specpoly_test:
 	@rm specpoly_test.log
 	@rm specpoly_test.aux
 	@open figures/specpoly_test.pdf
+
+	@pdflatex --interaction=batchmode TeX/limit_acc.tex
+	@mv limit_acc.pdf figures/limit_acc.pdf
+	@rm limit_acc.log
+	@rm limit_acc.aux
+	@open figures/limit_acc.pdf
 	
 pdf_wellcond_test:
 	@pdflatex --interaction=batchmode TeX/wellcond_err.tex

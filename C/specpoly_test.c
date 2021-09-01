@@ -13,11 +13,15 @@ int main(int argc,char **argv)
 	unsigned int deg_min = 5, deg_max = 80;
 	/* Chebyshev Polynomial */
 	f = fopen("data_files/chebyshev_test.dat","w+");
-	fprintf(f,"degree, ea_err, ea_comp_err, ea_quad_err, max_cond\n");
+	fprintf(f,"cond, ea_err, ea_bound, comp_err, comp_bound\n");
 	for(int deg = deg_min; deg <= deg_max; deg++)
 	{
 		// initialize storage for error
-		double ea_err, comp_err, quad_err;
+		double ea_err, comp_err;
+		// initialize storage for bounds
+		double ea_bound, comp_bound;
+		// initialize storage for condition number
+		double cond;
 		// initialize Chebyshev polynomial based on recursive formula and known roots
 		double complex* poly = (double complex*)malloc((deg+1)*sizeof(double complex));
 		double complex* roots = (double complex*)malloc(deg*sizeof(double complex));
@@ -57,35 +61,31 @@ int main(int argc,char **argv)
 		}
 		// free mpfr variables
 		mpfr_clears(pie,root,(mpfr_ptr) 0);
-		// initialize quad-precision polynomial and storage for quad-precision roots
-		mpc_t* poly_quad = (mpc_t*)malloc((deg+1)*sizeof(mpc_t));
-		mpc_t* roots_quad = (mpc_t*)malloc(deg*sizeof(mpc_t));
-		for(int i=0; i<deg; i++)
-		{
-			mpc_init2(poly_quad[i],113); mpc_init2(roots_quad[i],113);
-			mpc_set_dc(poly_quad[i],poly[i],MPC_RNDNN);
-		}
-		mpc_init2(poly_quad[deg],113);
-		mpc_set_dc(poly_quad[deg],poly[deg],MPC_RNDNN);
 		// ehrlich-aberth methods
 		ehrlich_aberth(poly,roots,deg,itmax);
 		ea_err = forw_err(roots,exact_roots,deg);
 		ehrlich_aberth_comp(poly,roots,deg,itmax);
 		comp_err = forw_err(roots,exact_roots,deg);
-		ehrlich_aberth_quad(poly_quad,roots_quad,deg,itmax);
-		for(int i=0; i<deg; i++)
+		// limiting accuracy bounds
+		cond = max_cond2(poly,exact_roots,deg);
+		ea_bound = gamma_const(2*deg)*cond;
+		if(ea_bound > 1)
 		{
-			roots[i] = mpc_get_dc(roots_quad[i],MPC_RNDNN);
+			ea_bound = 1;
 		}
-		quad_err = forw_err(roots,exact_roots,deg);
+		comp_bound = EPS + pow(gamma_const(2*deg),2)*cond;
+		if(comp_bound > 1)
+		{
+			comp_bound = 1;
+		}
 		// write to file
-		fprintf(f,"%d, ",deg);
+		fprintf(f,"%.5e, ",cond);
 		fprintf(f,"%.5e, ",ea_err);
+		fprintf(f,"%.5e, ",ea_bound);
 		fprintf(f,"%.5e, ",comp_err);
-		fprintf(f,"%.5e, ",quad_err);
-		fprintf(f,"%.5e\n",max_cond(poly,exact_roots,deg));
+		fprintf(f,"%.5e\n",comp_bound);
 		// free memory
-		free(poly); free(roots); free(exact_roots); free(poly_quad); free(roots_quad);
+		free(poly); free(roots); free(exact_roots);
 	}
 	// close file
 	fclose(f);
@@ -132,7 +132,7 @@ int main(int argc,char **argv)
 		fprintf(f,"%.5e, ",ea_err);
 		fprintf(f,"%.5e, ",comp_err);
 		fprintf(f,"%.5e, ",quad_err);
-		fprintf(f,"%.5e\n",max_cond(poly,exact_roots,deg));
+		fprintf(f,"%.5e\n",max_cond2(poly,exact_roots,deg));
 		// free memory
 		free(poly); free(roots); free(exact_roots); free(poly_quad); free(roots_quad);
 	}
@@ -181,7 +181,7 @@ int main(int argc,char **argv)
 		fprintf(f,"%.5e, ",ea_err);
 		fprintf(f,"%.5e, ",comp_err);
 		fprintf(f,"%.5e, ",quad_err);
-		fprintf(f,"%.5e\n",max_cond(poly,exact_roots,deg));
+		fprintf(f,"%.5e\n",max_cond2(poly,exact_roots,deg));
 		// free memory
 		free(poly); free(roots); free(exact_roots); free(poly_quad); free(roots_quad);
 	}
@@ -201,7 +201,7 @@ int main(int argc,char **argv)
 		double complex* exact_roots = (double complex*)malloc(deg*sizeof(double complex));
 		for(int i=0; i<deg; i++)
 		{
-			exact_roots[i] = (i+1) + I*pow(-1,i+1)*10*EPS;
+			exact_roots[i] = (i+1) + I*pow(-1,i+1)*8*EPS;
 		}
 		roots_to_poly(poly,exact_roots,1,deg);
 		// initialize quad-precision polynomial and storage for quad-precision roots
@@ -230,7 +230,7 @@ int main(int argc,char **argv)
 		fprintf(f,"%.5e, ",ea_err);
 		fprintf(f,"%.5e, ",comp_err);
 		fprintf(f,"%.5e, ",quad_err);
-		fprintf(f,"%.5e\n",max_cond(poly,exact_roots,deg));
+		fprintf(f,"%.5e\n",max_cond2(poly,exact_roots,deg));
 		// free memory
 		free(poly); free(roots); free(exact_roots); free(poly_quad); free(roots_quad);
 	}
@@ -273,7 +273,7 @@ int main(int argc,char **argv)
 		quad_err = forw_err(roots,exact_roots,deg);
 		// write to file
 		fprintf(f,"%d, ",poly_num);
-		fprintf(f,"%.5e, ",EPS + pow(gamma_const(2*deg),2)*max_cond(poly,exact_roots,deg));
+		fprintf(f,"%.5e, ",EPS + pow(gamma_const(2*deg),2)*max_cond2(poly,exact_roots,deg));
 		fprintf(f,"%.5e, ",ea_err);
 		fprintf(f,"%.5e, ",comp_err);
 		fprintf(f,"%.5e\n",quad_err);
