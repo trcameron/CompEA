@@ -379,4 +379,103 @@ void ehrlich_aberth_quad(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned
 	// clear mpc variables
 	mpc_clear(corr_quad); mpc_clear(h_quad); mpc_clear(hd_quad);
 }
+/* ehrlich_aberth in quadruple precision version 2 */
+void ehrlich_aberth_quad2(const mpc_t* poly_quad,mpc_t* roots_quad,const unsigned int deg,const unsigned int itmax)
+{
+	// local variables
+	bool s;
+	mpfr_t b_quad, eps_quad, x_quad;
+	mpc_t corr_quad, h_quad, hd_quad;
+	mpfr_init2(b_quad,113); mpfr_init2(eps_quad,113); mpfr_init2(x_quad,113);
+	mpc_init2(corr_quad,113); mpc_init2(h_quad,113); mpc_init2(hd_quad,113);
+	mpfr_set_d(eps_quad,pow(2,-113),MPFR_RNDN);
+	// local arrays
+	mpfr_t alpha_quad[deg+1];
+	bool conv[deg];
+	// ehrlich_aberth arrays
+	double complex poly[deg+1], roots[deg];
+	for(int i=0; i<=deg; i++)
+	{
+		poly[i] = mpc_get_dc(poly_quad[i],MPC_RNDNN);
+	}
+	// initial estimates (ehrlich_aberth method)
+	ehrlich_aberth(poly,roots,deg,itmax);
+	for(int i=0; i<deg; i++)
+	{
+		mpc_set_dc(roots_quad[i],roots[i],MPC_RNDNN);
+		conv[i] = false;
+	}
+	// update initial estiamtes
+	for(int i=0; i<=deg; i++)
+	{
+		mpfr_init2(alpha_quad[i],113);
+		mpc_abs(alpha_quad[i],poly_quad[i],MPFR_RNDN);
+		mpfr_mul_d(alpha_quad[i],alpha_quad[i],fma(3.8284271247461900976,i,1),MPFR_RNDN);
+	}
+	for(int i=0; i<itmax; i++)
+	{
+		for(int j=0; j<deg; j++)
+		{
+			if(!conv[j])
+			{
+				mpc_abs(x_quad,roots_quad[j],MPFR_RNDN);
+				if(mpfr_cmp_ui(x_quad,1)>0)
+				{
+					mpfr_ui_div(x_quad,1,x_quad,MPFR_RNDN);
+					rhorner_mp_real(alpha_quad,x_quad,deg,&b_quad);
+					mpc_ui_div(corr_quad,1,roots_quad[j],MPC_RNDNN);
+					rhorner_mp_cmplx(poly_quad,corr_quad,deg,&h_quad,&hd_quad);
+					mpfr_mul(b_quad,b_quad,eps_quad,MPFR_RNDN);
+					mpc_abs(x_quad,h_quad,MPFR_RNDN);
+					if(mpfr_cmp(x_quad,b_quad)>0)
+					{
+						rcorrection_quad(roots_quad,h_quad,hd_quad,deg,j,&corr_quad);
+						mpc_sub(roots_quad[j],roots_quad[j],corr_quad,MPC_RNDNN);	
+					}
+					else
+					{
+						conv[j] = true;
+					}
+				}
+				else
+				{
+					horner_mp_real(alpha_quad,x_quad,deg,&b_quad);
+					horner_mp_cmplx(poly_quad,roots_quad[j],deg,&h_quad,&hd_quad);
+					mpfr_mul(b_quad,b_quad,eps_quad,MPFR_RNDN);
+					mpc_abs(x_quad,h_quad,MPFR_RNDN);
+					if(mpfr_cmp(x_quad,b_quad)>0)
+					{
+						correction_quad(roots_quad,h_quad,hd_quad,deg,j,&corr_quad);
+						mpc_sub(roots_quad[j],roots_quad[j],corr_quad,MPC_RNDNN);	
+					}
+					else
+					{
+						conv[j] = true;
+					}
+				}
+			}
+		}
+		s = conv[0];
+		for(int j=1; j<deg; j++)
+		{
+			s = s && conv[j];
+		}
+		if(s)
+		{
+			break;
+		}
+	}
+	if(!s)
+	{
+		printf("not all roots quad converged\n");
+	}
+	// clear mpfr variables
+	mpfr_clears(b_quad, eps_quad, x_quad, (mpfr_ptr) 0);
+	for(int i=0; i<=deg; i++)
+	{
+		mpfr_clear(alpha_quad[i]);
+	}
+	// clear mpc variables
+	mpc_clear(corr_quad); mpc_clear(h_quad); mpc_clear(hd_quad);
+}
 #endif

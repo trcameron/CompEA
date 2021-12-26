@@ -2,7 +2,7 @@
 #define ERROR
 #include "horner.h"
 /* Global Constants */
-const unsigned int PREC = 131072;
+const unsigned int PREC = 262144;
 /* maximum value */
 double max_value(const double* values,const unsigned int n)
 {

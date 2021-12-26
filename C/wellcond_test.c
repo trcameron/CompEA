@@ -8,7 +8,7 @@
 int main(int argc,char **argv)
 {
 	/* testing variables */
-	const unsigned deg_min = 10, deg_max = 1280, itmax = 50, itnum = 10; 
+	const unsigned deg_min = 10, deg_max = 2560, itmax = 50, itnum = 10; 
 	double ea_et, comp_et, quad_et;
 	clock_t ea_begin, ea_end, comp_begin, comp_end, quad_begin, quad_end;
 	/* random coefficients test */
@@ -56,7 +56,7 @@ int main(int argc,char **argv)
 			comp_et += (double)(comp_end - comp_begin) / CLOCKS_PER_SEC;
 			comp_err[it] = back_err(poly,roots,deg);
 			quad_begin = clock();
-			ehrlich_aberth_quad(poly_quad,roots_quad,deg,itmax);
+			ehrlich_aberth_quad2(poly_quad,roots_quad,deg,itmax);
 			quad_end = clock();
 			quad_et += (double)(quad_end - quad_begin) / CLOCKS_PER_SEC;
 			for(int i=0; i<deg; i++)
@@ -122,7 +122,7 @@ int main(int argc,char **argv)
 			comp_et += (double)(comp_end - comp_begin) / CLOCKS_PER_SEC;
 			comp_err[it] = back_err(poly,roots,deg);
 			quad_begin = clock();
-			ehrlich_aberth_quad(poly_quad,roots_quad,deg,itmax);
+			ehrlich_aberth_quad2(poly_quad,roots_quad,deg,itmax);
 			quad_end = clock();
 			quad_et += (double)(quad_end - quad_begin) / CLOCKS_PER_SEC;
 			for(int i=0; i<deg; i++)

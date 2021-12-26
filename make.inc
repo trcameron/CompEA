@@ -15,4 +15,4 @@ CCOPT = -O3 -march=native -mtune=native
 # ---------------------------------------------------------------------
 # Link and include flags
 # ---------------------------------------------------------------------
-CCLNFLAGS = -lmpfr -lgmp -lmpc
+CCLNFLAGS = -lm -lmpfr -lgmp -lmpc

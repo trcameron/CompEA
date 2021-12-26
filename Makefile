@@ -4,16 +4,16 @@
 include make.inc
 
 install_horner_test:
-	@$(CCC) $(CCOPT) $(CCLNFLAGS) -o horner_test C/horner_test.c
+	@$(CCC) $(CCOPT) -o horner_test C/horner_test.c $(CCLNFLAGS)
 	
 install_illcond_test:
-	@$(CCC) $(CCOPT) $(CCLNFLAGS) -o illcond_test C/illcond_test.c
+	@$(CCC) $(CCOPT) -o illcond_test C/illcond_test.c $(CCLNFLAGS)
 	
 install_specpoly_test:
-	@$(CCC) $(CCOPT) $(CCLNFLAGS) -o specpoly_test C/specpoly_test.c
+	@$(CCC) $(CCOPT) -o specpoly_test C/specpoly_test.c $(CCLNFLAGS)
 	
 install_wellcond_test:
-	@$(CCC) $(CCOPT) $(CCLNFLAGS) -o wellcond_test C/wellcond_test.c
+	@$(CCC) $(CCOPT) -o wellcond_test C/wellcond_test.c $(CCLNFLAGS)
 	
 pdf_horner_test:
 	@pdflatex --interaction=batchmode TeX/horner_errbound.tex

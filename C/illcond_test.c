@@ -16,7 +16,7 @@ int main(int argc,char **argv)
 	/* random roots on unit-disk test */
 	FILE* f;
 	f = fopen("data_files/illcond_unitdisk_test.dat","w+");
-	fprintf(f,"degree, ea_time, ea_err, ea_comp_time, ea_comp_err, ea_quad_time, ea_quad_err\n");
+	fprintf(f,"degree, ea_time, ea_err, ea_comp_time, ea_comp_err, ea_quad_time, ea_quad_err, max_cond\n");
 	ea_et = 0; comp_et = 0; quad_et = 0;
 	for(int deg = deg_min; deg <= deg_max; deg += 10)
 	{
@@ -24,6 +24,7 @@ int main(int argc,char **argv)
 		double* ea_err = (double*)malloc(itnum*sizeof(double));
 		double* comp_err = (double*)malloc(itnum*sizeof(double));
 		double* quad_err = (double*)malloc(itnum*sizeof(double));
+		double* cond = (double*)malloc(itnum*sizeof(double));
 		for(int it = 0; it < itnum; it++)
 		{
 			// initialize polynomial based on random roots on unit-disk
@@ -59,7 +60,7 @@ int main(int argc,char **argv)
 			comp_et += (double)(comp_end - comp_begin) / CLOCKS_PER_SEC;
 			comp_err[it] = back_err(poly,roots,deg);
 			quad_begin = clock();
-			ehrlich_aberth_quad(poly_quad,roots_quad,deg,itmax);
+			ehrlich_aberth_quad2(poly_quad,roots_quad,deg,itmax);
 			quad_end = clock();
 			quad_et += (double)(quad_end - quad_begin) / CLOCKS_PER_SEC;
 			for(int i=0; i<deg; i++)
@@ -67,8 +68,9 @@ int main(int argc,char **argv)
 				roots[i] = mpc_get_dc(roots_quad[i],MPC_RNDNN);
 			}
 			quad_err[it] = back_err(poly,roots,deg);
+			cond[it] = max_cond2(poly,roots,deg);
 			// free memory
-			free(poly); free(roots); free(poly_quad); free(roots_quad);	
+			free(poly); free(roots); free(poly_quad); free(roots_quad);
 		}
 		// write to file
 		fprintf(f,"%d, ",deg);
@@ -77,16 +79,17 @@ int main(int argc,char **argv)
 		fprintf(f,"%.5e, ",comp_et);
 		fprintf(f,"%.5e, ",max_value(comp_err,itnum));
 		fprintf(f,"%.5e, ",quad_et);
-		fprintf(f,"%.5e\n",max_value(quad_err,itnum));
+		fprintf(f,"%.5e, ",max_value(quad_err,itnum));
+		fprintf(f,"%.5e\n",max_value(cond,itnum));
 		// free memory
-		free(ea_err); free(comp_err); free(quad_err);
+		free(ea_err); free(comp_err); free(quad_err); free(cond);
 	}
 	// close file
 	fclose(f);
 	/* truncated exponential test */
 	deg_min = 10, deg_max = 100;
 	f = fopen("data_files/illcond_truncexp_test.dat","w+");
-	fprintf(f,"degree, ea_time, ea_err, ea_comp_time, ea_comp_err, ea_quad_time, ea_quad_err\n");
+	fprintf(f,"degree, ea_time, ea_err, ea_comp_time, ea_comp_err, ea_quad_time, ea_quad_err, max_cond\n");
 	ea_et = 0; comp_et = 0; quad_et = 0;
 	for(int deg = deg_min; deg <= deg_max; deg += 10)
 	{
@@ -94,6 +97,7 @@ int main(int argc,char **argv)
 		double* ea_err = (double*)malloc(itnum*sizeof(double));
 		double* comp_err = (double*)malloc(itnum*sizeof(double));
 		double* quad_err = (double*)malloc(itnum*sizeof(double));
+		double* cond = (double*)malloc(itnum*sizeof(double));
 		for(int it = 0; it < itnum; it++)
 		{
 			// initialize polynomial based on random roots on unit-disk
@@ -129,7 +133,7 @@ int main(int argc,char **argv)
 			comp_et += (double)(comp_end - comp_begin) / CLOCKS_PER_SEC;
 			comp_err[it] = back_err(poly,roots,deg);
 			quad_begin = clock();
-			ehrlich_aberth_quad(poly_quad,roots_quad,deg,itmax);
+			ehrlich_aberth_quad2(poly_quad,roots_quad,deg,itmax);
 			quad_end = clock();
 			quad_et += (double)(quad_end - quad_begin) / CLOCKS_PER_SEC;
 			for(int i=0; i<deg; i++)
@@ -137,8 +141,9 @@ int main(int argc,char **argv)
 				roots[i] = mpc_get_dc(roots_quad[i],MPC_RNDNN);
 			}
 			quad_err[it] = back_err(poly,roots,deg);
+			cond[it] = max_cond2(poly,roots,deg);
 			// free memory
-			free(poly); free(roots); free(poly_quad); free(roots_quad);	
+			free(poly); free(roots); free(poly_quad); free(roots_quad);
 		}
 		// write to file
 		fprintf(f,"%d, ",deg);
@@ -147,9 +152,10 @@ int main(int argc,char **argv)
 		fprintf(f,"%.5e, ",comp_et);
 		fprintf(f,"%.5e, ",max_value(comp_err,itnum));
 		fprintf(f,"%.5e, ",quad_et);
-		fprintf(f,"%.5e\n",max_value(quad_err,itnum));
+		fprintf(f,"%.5e, ",max_value(quad_err,itnum));
+		fprintf(f,"%.5e\n",max_value(cond,itnum));
 		// free memory
-		free(ea_err); free(comp_err); free(quad_err);
+		free(ea_err); free(comp_err); free(quad_err); free(cond);
 	}
 	// close file
 	fclose(f);

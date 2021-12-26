@@ -239,7 +239,7 @@ int main(int argc,char **argv)
 	/* polynomials with multiple and near multipe roots */
 	f = fopen("data_files/multroots_test.dat","w+");
 	fprintf(f,"poly_num, limit_acc, ea_err, ea_comp_err, ea_quad_err\n");
-	for(unsigned int poly_num = 1; poly_num <= 7; poly_num++)
+	for(unsigned int poly_num = 1; poly_num <= 8; poly_num++)
 	{
 		// initialize storage for error
 		double ea_err, comp_err, quad_err;

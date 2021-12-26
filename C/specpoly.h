@@ -230,8 +230,49 @@ void spec_poly(double complex** poly,double complex** exact_roots,unsigned int* 
         (*poly)[8] = CMPLX(0E0,0E0);
         (*poly)[9] = CMPLX(1000000000000E0,0E0);
 		break;
-		// Multiplicity I
+		// Mignotte-like, theoretical limit accuracy 1.74E-16
 		case 5:
+		// set degree
+		*deg = 15;
+		// allocate space for poly and exact_roots
+		*poly = (double complex*)malloc((*deg+1)*sizeof(double complex));
+		*exact_roots = (double complex*)malloc((*deg)*sizeof(double complex));
+		// store Mignote-like exact_roots, rounded to double precision
+		(*exact_roots)[0] = CMPLX(0.099987425673333859505,0.000012562483397649197374);
+		(*exact_roots)[1] = CMPLX(0.10001257432664339049,0.000012586200480100428793);
+		(*exact_roots)[2] = CMPLX(2.1791125806140764531,0.65117271037941340996);
+		(*exact_roots)[3] = CMPLX(1.4757573307395247704,1.7467452755661169881);
+		(*exact_roots)[4] = CMPLX(0.29230184567764328124,2.2876902437304347214);
+		(*exact_roots)[5] = CMPLX(-0.99554839384917147813,2.1023030098707558591);
+		(*exact_roots)[6] = CMPLX(-1.9788880919295167452,1.2494850427026635232);
+		(*exact_roots)[7] = CMPLX(-2.3454705425050670629,0E0);
+		(*exact_roots)[8] = CMPLX(-1.9788880919295167452,-1.2494850427026635232);
+		(*exact_roots)[9] = CMPLX(-0.99554839384917147813,-2.1023030098707558591);
+		(*exact_roots)[10] = CMPLX(0.29230184567764328124,-2.2876902437304347214);
+		(*exact_roots)[11] = CMPLX(1.4757573307395247704,-1.7467452755661169881);
+		(*exact_roots)[12] = CMPLX(2.1791125806140764531,-0.65117271037941340996);
+		(*exact_roots)[13] = CMPLX(0.10001257432664339049,-0.000012586200480100428793);
+		(*exact_roots)[14] = CMPLX(0.099987425673333859505,-0.000012562483397649197374);
+		// store Mignote-like poly, rounded to double precision
+		(*poly)[0] = CMPLX(1E0,0E0);
+		(*poly)[1] = CMPLX(-40E0,0E0);
+		(*poly)[2] = CMPLX(600E0,0E0);
+		(*poly)[3] = CMPLX(-4000E0,0E0);
+		(*poly)[4] = CMPLX(10000E0,0E0);
+		(*poly)[5] = CMPLX(0E0,0E0);
+		(*poly)[6] = CMPLX(0E0,0E0);
+		(*poly)[7] = CMPLX(0E0,0E0);
+		(*poly)[8] = CMPLX(0E0,0E0);
+		(*poly)[9] = CMPLX(0E0,0E0);
+		(*poly)[10] = CMPLX(0E0,0E0);
+		(*poly)[11] = CMPLX(0E0,0E0);
+		(*poly)[12] = CMPLX(0E0,0E0);
+		(*poly)[13] = CMPLX(0E0,0E0);
+		(*poly)[14] = CMPLX(0E0,0E0);
+		(*poly)[15] = CMPLX(1E0,0E0);
+		break;
+		// Multiplicity I
+		case 6:
 		// set degree
 		*deg = 55;
 		// allocate space for poly and exact_roots
@@ -352,7 +393,7 @@ void spec_poly(double complex** poly,double complex** exact_roots,unsigned int* 
         (*poly)[55] = CMPLX(1E0,0E0);
 		break;
 		// Multiplicity II
-		case 6:
+		case 7:
 		// set degree
 		*deg = 62;
 		// allocate space for poly and exact_roots
@@ -487,7 +528,7 @@ void spec_poly(double complex** poly,double complex** exact_roots,unsigned int* 
         (*poly)[62] = CMPLX(9E0,0E0);
 		break;
 		// Multiplicity III
-		case 7:
+		case 8:
 		// set degree
 		*deg = 17;
 		// allocate space for poly and exact_roots
